@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    Haloworld
+    <img src="" width="200" height="200" alt="kosong" id="qrcode" class="visible">
+    <ul id="messages"></ul>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        var socket = io();
+        
+        const qrcodeEl = document.getElementById('qrcode');
+        const messagesEl = document.getElementById('messages');
+
+        socket.emit('is_authenticated', true);
+        
+        socket.on('qr', (payload) => {
+            qrcodeEl.setAttribute('src', payload);
+        });
+
+        socket.on('message', (payload) => {
+            if (payload.toLocaleLowerCase().includes('connected')) {
+                qrcodeEl.classList.toggle('visible');
+                qrcodeEl.classList.toggle('invisible');
+            }
+            
+            if (payload.toLocaleLowerCase().includes('disconnected')) {
+                qrcodeEl.classList.toggle('visible');
+                qrcodeEl.classList.toggle('invisible');
+            }
+
+            const element = document.createElement('li').textContent = payload
+            messagesEl.append(element);
+        });
+
+        socket.on('clear_messages', () => {
+            messagesEl.innerHTML = '';
+        });
+    </script>
+</body>
+</html>
