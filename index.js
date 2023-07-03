@@ -76,6 +76,14 @@ io.on('connection', (socket) => {
   });
 });
 
+client.on('message', (message) => {
+  const command = message.body;
+
+  if (command.startsWith('!help')) {
+    message.reply('Halo! ada yang bisa saya bantu?');
+  }
+});
+
 const port = process.env.PORT || 3003;
 server.listen(port, () => {
   console.log(`APP running on *:${port}`);
