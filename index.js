@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const path = require('path');
 
 const express = require('express');
@@ -5,6 +7,16 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
+
+const cors = require('cors');
+const options = {
+  cors: {
+    origin: '*',
+    method: ['GET', 'POST'],
+  }
+};
+
+const io = new Server(server, options);
 
 const qrcode = require('qrcode');
 const { Client, LocalAuth } = require('whatsapp-web.js');
@@ -19,9 +31,8 @@ client.on('ready', () => {
 
 client.initialize();
 
-const io = new Server(server);
-
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(cors(options));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -65,6 +76,6 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(3000, () => {
+server.listen(process.env.PORT || 3003, () => {
   console.log('APP running on *:3000');
 });
