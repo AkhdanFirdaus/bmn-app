@@ -76,6 +76,7 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(process.env.PORT || 3003, () => {
-  console.log('APP running on *:3000');
+const port = process.env.PORT || 3003;
+server.listen(port, () => {
+  console.log(`APP running on *:${port}`);
 });
