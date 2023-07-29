@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Kendaraan {
+  id                      Int     @id @default(autoincrement())
+  kodeSatker              String	
+  namaSatker	            String
+  kodeBarang	            String
+  namaBarang	            String
+  nup	                    Int?
+  kondisi	                Int     @default(0)
+  merk    	              String?
+  tglRekamPertama	        String?
+  tglPerolehan	          String?
+  nilaiPerolehanPertama	  Int     @default(0)
+  nilaiMutasi	            Int     @default(0)
+  nilaiPerolehan	        Int     @default(0)
+  nilaiPenyusutan	        Int     @default(0)
+  nilaiBuku	              Int     @default(0)
+  kuantitas	              Int     @default(1)
+  jmlFoto	                Int     @default(0)
+  statusPenggunaan	      Int     @default(0)
+  statusPengelolaan	      String?
+  noPsp	                  String?
+  tglPsp	                String?
+  noBpkb	                String?
+  noPolisi	              String
+  pemakai	                String?
+  jumlahKib               Int     @default(0)
+  laporan                 Laporan[]
+}
+
+model Laporan {
+  id                Int       @id @default(autoincrement())
+  kendaraan         Kendaraan @relation(fields: [kendaraanId], references: [id])
+  kendaraanId       Int
+  laporan           String
+  createdAt         DateTime  @default(now())
+  outputKlasifikasi OutputKlasifikasi[]
+}
+
+model OutputKlasifikasi {
+  id            Int     @id @default(autoincrement())
+  laporan       Laporan @relation(fields: [laporanId], references: [id])
+  laporanId     Int
+  label         Label   @relation(fields: [labelId], references: [id])
+  labelId       Int
+}
+
+model Label {
+  id            Int @id @default(autoincrement())
+  indeks        Int
+  label         String
+  bobot         Int @default(0)
+  outputKlasifikasi OutputKlasifikasi[]
+}

@@ -1,2 +1,6 @@
 node_modules
+prisma/seeders/dataset
 .wwebjs_auth
+
+.env
+.wwebjs_cache
