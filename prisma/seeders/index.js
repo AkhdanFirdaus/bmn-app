@@ -1,6 +1,8 @@
+/* eslint-disable no-unused-vars */
 const fs = require('fs');
 const path = require('path');
 const papa = require('papaparse');
+const db = require('../../src/helpers/db');
 
 function toCamelCase(str) {
   var words = str.split(/[\s/]+/);
@@ -34,10 +36,40 @@ function initKendaraan() {
       }
       data.push(newKendaraan);
     },
-    complete: function() {
-      const kendaraan =data.filter(kendaraan => !kendaraan.namaBarang.includes('Sepeda Motor'));
+    complete: async function() {
+      const kendaraan = data.filter(kendaraan => !kendaraan.namaBarang.includes('Sepeda Motor'));
       //TODO: masukkan fungsi input ke database
-      console.log(kendaraan);
+      for (const data of kendaraan) {
+        await db.kendaraan.create({
+          data: {
+            kodeSatker: data.kodeSatker,
+            namaSatker: data.namaSatker,
+            kodeBarang: data.kodeBarang,
+            namaBarang: data.namaBarang,
+            nup: parseInt(data.nup),
+            kondisi: data.kondisi === 'Baik' ? 1 : 0,
+            merk: data.merkTipe,
+            tglRekamPertama: data.tglRekamPertama,
+            tglPerolehan: data.tglPerolehan,
+            nilaiPerolehanPertama: data.nilaiPerolehanPertama ? parseInt(data.nilaiPerolehanPertama) : 0,
+            nilaiMutasi: data.nilaiMutasi ? parseInt(data.nilaiMutasi) : 0,
+            nilaiPerolehan: data.nilaiPerolehan ? parseInt(data.nilaiPerolehan) : 0,
+            nilaiPenyusutan: data.nilaiPenyusutan ? parseInt(data.nilaiPenyusutan) : 0,
+            nilaiBuku: data.nilaiBuku ? parseInt(data.nilaiBuku) : 0,
+            kuantitas: data.kuantitas ? parseInt(data.kuantitas) : 1,
+            jmlFoto: data.jmlFoto ? parseInt(data.jmlFoto) : 0,
+            // 0 tidak digunakan, 1 digunakan dinas operasional, 2 digunakan dinas jabatan
+            statusPenggunaan: data ? 0 : data === 'Digunakan sendiri untuk operasional' ? 1 : 2,
+            statusPengelolaan: data.statusPengelolaan,
+            noPsp: data.noPsp,
+            tglPsp: data.tglPsp,
+            noBpkb: data.nOBpkb,
+            noPolisi: data.nOPolisi,
+            pemakai: data.pemakai,
+            jumlahKib: data.jumlahKib ? parseInt(data.jumlahKib) : 0,
+          },
+        });
+      }
     }
   });
 }

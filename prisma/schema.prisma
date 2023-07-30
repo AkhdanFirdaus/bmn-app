@@ -10,6 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                      Int     @id @default(autoincrement())
+  nama                    String
+  phone_number            String
+  pin                     String
+  laporan                 Laporan[]
+  RiwayatPenggunaan       RiwayatPenggunaan[]
+}
+
 model Kendaraan {
   id                      Int     @id @default(autoincrement())
   kodeSatker              String	
@@ -37,6 +46,17 @@ model Kendaraan {
   pemakai	                String?
   jumlahKib               Int     @default(0)
   laporan                 Laporan[]
+  RiwayatPenggunaan       RiwayatPenggunaan[]
+}
+
+model RiwayatPenggunaan {
+  id                Int       @id @default(autoincrement())
+  pengguna          User      @relation(fields: [pengguna_id], references: [id])
+  pengguna_id       Int
+  kendaraan         Kendaraan @relation(fields: [kendaraan_id], references: [id])
+  kendaraan_id      Int
+  mulai             DateTime  @default(now())
+  selesai           DateTime?
 }
 
 model Laporan {
@@ -45,6 +65,8 @@ model Laporan {
   kendaraanId       Int
   laporan           String
   createdAt         DateTime  @default(now())
+  pelapor           User      @relation(fields: [pelapor_id], references: [id])
+  pelapor_id        Int
   outputKlasifikasi OutputKlasifikasi[]
 }
 
