@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const papa = require('papaparse');
-const db = require('../../src/helpers/db');
+const db = require('../../src/db');
 
 function toCamelCase(str) {
   var words = str.split(/[\s/]+/);
@@ -59,7 +59,7 @@ function initKendaraan() {
             kuantitas: data.kuantitas ? parseInt(data.kuantitas) : 1,
             jmlFoto: data.jmlFoto ? parseInt(data.jmlFoto) : 0,
             // 0 tidak digunakan, 1 digunakan dinas operasional, 2 digunakan dinas jabatan
-            statusPenggunaan: data ? 0 : data === 'Digunakan sendiri untuk operasional' ? 1 : 2,
+            statusPenggunaan: data === 'Digunakan sendiri untuk operasional' ? 0 : 1,
             statusPengelolaan: data.statusPengelolaan,
             noPsp: data.noPsp,
             tglPsp: data.tglPsp,
@@ -74,8 +74,43 @@ function initKendaraan() {
   });
 }
 
+function initLabel() {
+  const data = [];
+  const location = path.resolve(__dirname, 'dataset/raw_kategori_kerusakan.csv');
+  const file = fs.createReadStream(location);
+  papa.parse(file, {
+    header: true,
+    delimiter: ',',
+    step: function (results) {
+      const label = results.data;
+      const keys = Object.keys(label);
+      const newKeys = keys.map(key => toCamelCase(key));
+      const newLabel = {};
+      for (let i = 0; i < newKeys.length; i++) {
+        const key = newKeys[i];
+        newLabel[key] = label[keys[i]];
+      }
+      data.push(newLabel);
+    },
+    complete: async function() {
+      let i=0;
+      for (const lbl of data) {
+        await db.label.create({
+          data: {
+            label: lbl.kerusakan,
+            bobot: lbl.bobot ? parseInt(lbl.bobot) : 0,
+            indeks: i,
+          },
+        });
+        i++;
+      }
+    }
+  });
+}
+
 function init() {
-  initKendaraan();
+  // initKendaraan();
+  initLabel();
 }
 
 init();

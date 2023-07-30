@@ -1,14 +1,19 @@
 require('dotenv').config();
 
 const path = require('path');
+const routes = require('./src/routes');
 
 const express = require('express');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require('socket.io');
-
 const cors = require('cors');
+const qrcode = require('qrcode');
+const { Client, LocalAuth } = require('whatsapp-web.js');
+const db = require('./src/db');
+const { getStatusPenggunaan } = require('./src/helpers');
+
 const options = {
   cors: {
     origin: '*',
@@ -17,9 +22,6 @@ const options = {
 };
 
 const io = new Server(server, options);
-
-const qrcode = require('qrcode');
-const { Client, LocalAuth } = require('whatsapp-web.js');
 
 const client = new Client({
   authStrategy: new LocalAuth(),
@@ -33,10 +35,7 @@ client.initialize();
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(cors(options));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.use('/', routes);
 
 io.on('connection', (socket) => {
   console.log(`Socket: a user (${socket.id}) Connected`);
@@ -55,6 +54,12 @@ io.on('connection', (socket) => {
   
   socket.on('disconnect', () => {
     console.log(`Socket: user (${socket.id}) Disconnected`);
+  });
+
+  socket.on('get_kendaraan', async () => {
+    socket.emit('message', 'Mengambil data kendaraan...');
+    const kendaraan = await db.kendaraan.findMany();
+    socket.emit('data', kendaraan);
   });
 
   client.on('qr', (qr) => {
@@ -76,11 +81,60 @@ io.on('connection', (socket) => {
   });
 });
 
-client.on('message', (message) => {
+client.on('message', async (message) => {
   const command = message.body;
 
   if (command.startsWith('!help')) {
     message.reply('Halo! ada yang bisa saya bantu?');
+  }
+
+  if (command.startsWith('!ping')) {
+    message.reply('pong');
+  }
+
+  if (command.startsWith('!echo')) {
+    const echo = command.replace('!echo', '');
+    message.reply(echo);
+  }
+
+  if (command.startsWith('!kendaraan')) {
+    const params = command.split(' ');
+    let responses = '';
+    
+    if (params[1]) {
+      responses += `Detail Kendaraan ${params[1]} \n\n`;
+      try {
+        const kendaraan = await db.kendaraan.findFirst({
+          where: {
+            id: parseInt(params[1]),
+          },
+        });
+        responses += 'Merk: ' + kendaraan.merk + '\n';
+        responses += 'Jenis: ' + kendaraan.namaBarang + '\n';
+        responses += 'NUP: ' + kendaraan.nup + '\n';
+        responses += 'Status Pengunaan: ' + getStatusPenggunaan(kendaraan.statusPenggunaan) + '\n';
+        responses += 'Tgl Perolehan: ' + kendaraan.tglPerolehan + '\n';
+        responses += 'No BPKB: ' + kendaraan.noBpkb + '\n';
+        responses += 'No Polisi: ' + kendaraan.noPolisi + '\n';
+        responses += 'Kondisi: ' + kendaraan.kondisi + '\n';
+        responses += 'Pemakai: ' + kendaraan.pemakai + '\n';
+      } catch (error) {
+        responses += 'Kendaraan tidak ditemukan\n';
+        responses += 'Error: ' + JSON.stringify(error) + '\n';
+      }
+      
+    } else {
+      responses += 'List Kendaraan Kosong\n\n';
+      const kendaraan = await db.kendaraan.findMany({
+        orderBy: {
+          id: 'asc',
+        }
+      });
+      responses += kendaraan.map((item) => (item.id) + '. ' + item.merk).join('\n');
+      responses += '\n\nKetik !kendaraan <nomor> untuk melihat detail kendaraan';
+    }
+    
+    message.reply(responses);
   }
 });
 

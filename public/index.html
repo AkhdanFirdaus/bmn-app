@@ -7,9 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-    Haloworld
-    <img src="" width="200" height="200" alt="kosong" id="qrcode" class="visible">
-    <ul id="messages"></ul>
+    <div class="flex flex-col h-full md:h-screen">
+        <header>
+            <nav class="flex flex-row justify-between md:justify-start py-2 px-6 w-full shadow gap-3">
+                <a href="/" class="text-lg no-underline text-gray-500 hover:text-blue-500">Home</a>
+                <a href="/kendaraan" class="text-lg no-underline text-gray-500 hover:text-blue-500">Kendaraan</a>
+            </nav>
+        </header>
+        <main class="flex-1 flex flex-col justify-center">
+            <div class="flex flex-col md:flex-row justify-center md:justify-between gap-4 flex-1 items-center">
+                <div class="text-left p-4">
+                    <h1 class="text-2xl">BMN App</h1>
+                    <p>Aplikasi untuk monitoring BMN</p>
+                </div>
+                <div class="text-center p-4">
+                    <h1>QR Code</h1>
+                    <p>Scan this qr to connect to chatbot</p>
+                    <img src="" width="200" height="200" alt="kosong" id="qrcode" class="visible">
+                </div>
+            </div>
+            <div class="p-4 bg-gray-300 flex-1 flex flex-col">
+                <h1>Messages</h1>
+                <ul class="flex-1 overflow-y-auto" id="messages"></ul>
+            </div>
+        </main>
+        <footer>
+            <div class="flex flex-row justify-center gap-3 py-2 px-6 w-full border-2 border-gray-300">
+                <p>Created by <a href="https://github.com/akhdanfirdaus">Akhdan Firdaus</a></p>
+            </div>
+        </footer>
+    </div>
+
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
         var socket = io();

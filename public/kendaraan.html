@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kendaraan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div id="wrapper" class="container mx-auto flex flex-col space-y-5 h-screen overflow-hidden">
+    <nav class="mt-5 flex flex-row justify-between md:justify-start py-2 px-6 w-full border-2 border-gray-300 gap-3">
+      <a href="/" class="text-lg no-underline text-gray-500 hover:text-blue-500">Home</a>
+      <a href="/kendaraan" class="text-lg no-underline text-gray-500 hover:text-blue-500">Kendaraan</a>
+    </nav>
+    <div id="filter">
+      <form class="w-full">
+        <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-gray-300">Search</label>
+        <div class="relative">
+            <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <input type="search" id="default-search" class="block p-4 pl-10 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search Mockups, Logos..." required>
+            <button type="submit" class="text-white absolute right-2.5 bottom-2.5 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Search</button>
+        </div>
+      </form>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+      <div id="content" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+    </div>
+  </div>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    var socket = io();
+
+    const filterElement = document.getElementById('filter');
+    const contentElement = document.getElementById('content');
+
+    function getAge(dateString) {
+      var today = new Date();
+      var birthDate = new Date(dateString);
+      var age = today.getFullYear() - birthDate.getFullYear();
+      var m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+      }
+      return age ? age : dateString
+    }
+
+    function createCard(data) {
+      const { namaBarang, noPolisi, tglPerolehan, merk} = data
+      return (
+        `<div class="bg-white rounded shadow p-5 space-y-3">
+          <h1 class="text-lg font-bold">${merk}</h1>
+          <table>
+            <tbody>
+              <tr>
+                <td>Nama</td>
+                <th class="text-left text-sm">${namaBarang}</th>
+              </tr>
+              <tr>
+                <td>Nopol</td>
+                <th class="text-left text-sm">${noPolisi}</th>
+              </tr>
+              <tr>
+                <td>Umur</td>
+                <th class="text-left text-sm">${getAge(tglPerolehan)}</th>
+              </tr>
+              <tr>
+                <td>Kondisi</td>
+                <th class="text-left text-sm">Value</th>
+              </tr>
+            </tbody>
+          </table>
+        </div>`
+      );
+    }
+
+    function init() {
+      socket.emit('get_kendaraan');
+      socket.on('data', (data) => {
+        data.map((item, index) => {
+          const card = document.createElement('div');
+          card.innerHTML = createCard(item);
+          contentElement.append(card);
+        });
+      });
+    }
+
+    init();
+
+  </script>
+</body>
+</html>
