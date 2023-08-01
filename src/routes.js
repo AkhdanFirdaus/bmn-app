@@ -10,6 +10,21 @@ routes.get('/api', async (req, res) => {
   });
 });
 
+routes.post('/api/daftar', async (req, res) => {
+  const {nama, phoneNumber, pin} = req.body;
+  const user = await db.user.create({
+    data: {
+      nama,
+      phoneNumber,
+      pin,
+    },
+  });
+  res.json({
+    message: 'Berhasil daftar',
+    data: user,
+  });
+});
+
 routes.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
@@ -17,5 +32,10 @@ routes.get('/', (req, res) => {
 routes.get('/kendaraan', async (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'kendaraan.html'));
 });
+
+routes.get('/daftar', async (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'daftar.html'));
+});
+
 
 module.exports = routes;

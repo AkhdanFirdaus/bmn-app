@@ -11,77 +11,82 @@ datasource db {
 }
 
 model User {
-  id                      Int     @id @default(autoincrement())
-  nama                    String
-  phone_number            String
-  pin                     String
-  laporan                 Laporan[]
-  RiwayatPenggunaan       RiwayatPenggunaan[]
+  id                Int                 @id @default(autoincrement())
+  nama              String
+  phoneNumber       String
+  pin               String
+  laporan           Laporan[]
+  RiwayatPenggunaan RiwayatPenggunaan[]
+  isActivated       Boolean             @default(false)
 }
 
 model Kendaraan {
-  id                      Int     @id @default(autoincrement())
-  kodeSatker              String	
-  namaSatker	            String
-  kodeBarang	            String
-  namaBarang	            String
-  nup	                    Int?
-  kondisi	                Int     @default(0)
-  merk    	              String?
-  tglRekamPertama	        String?
-  tglPerolehan	          String?
-  nilaiPerolehanPertama	  Int     @default(0)
-  nilaiMutasi	            Int     @default(0)
-  nilaiPerolehan	        Int     @default(0)
-  nilaiPenyusutan	        Int     @default(0)
-  nilaiBuku	              Int     @default(0)
-  kuantitas	              Int     @default(1)
-  jmlFoto	                Int     @default(0)
-  statusPenggunaan	      Int     @default(0)
-  statusPengelolaan	      String?
-  noPsp	                  String?
-  tglPsp	                String?
-  noBpkb	                String?
-  noPolisi	              String
-  pemakai	                String?
-  jumlahKib               Int     @default(0)
-  laporan                 Laporan[]
-  RiwayatPenggunaan       RiwayatPenggunaan[]
+  id                    Int                 @id @default(autoincrement())
+  kodeSatker            String
+  namaSatker            String
+  kodeBarang            String
+  namaBarang            String
+  nup                   Int?
+  kondisi               Int                 @default(0)
+  merk                  String?
+  tglRekamPertama       String?
+  tglPerolehan          String?
+  nilaiPerolehanPertama Int                 @default(0)
+  nilaiMutasi           Int                 @default(0)
+  nilaiPerolehan        Int                 @default(0)
+  nilaiPenyusutan       Int                 @default(0)
+  nilaiBuku             Int                 @default(0)
+  kuantitas             Int                 @default(1)
+  jmlFoto               Int                 @default(0)
+  statusPenggunaan      Int                 @default(0)
+  statusPengelolaan     String?
+  noPsp                 String?
+  tglPsp                String?
+  noBpkb                String?
+  noPolisi              String
+  pemakai               String?
+  jumlahKib             Int                 @default(0)
+  laporan               Laporan[]
+  RiwayatPenggunaan     RiwayatPenggunaan[]
+  isDeleted             Boolean             @default(false)
 }
 
 model RiwayatPenggunaan {
-  id                Int       @id @default(autoincrement())
-  pengguna          User      @relation(fields: [pengguna_id], references: [id])
-  pengguna_id       Int
-  kendaraan         Kendaraan @relation(fields: [kendaraan_id], references: [id])
-  kendaraan_id      Int
-  mulai             DateTime  @default(now())
-  selesai           DateTime?
+  id           Int       @id @default(autoincrement())
+  pengguna     User      @relation(fields: [pengguna_id], references: [id])
+  pengguna_id  Int
+  kendaraan    Kendaraan @relation(fields: [kendaraan_id], references: [id])
+  kendaraan_id Int
+  mulai        DateTime  @default(now())
+  selesai      DateTime?
+  isApproved   Boolean   @default(false)
 }
 
 model Laporan {
-  id                Int       @id @default(autoincrement())
-  kendaraan         Kendaraan @relation(fields: [kendaraanId], references: [id])
+  id                Int                 @id @default(autoincrement())
+  kendaraan         Kendaraan           @relation(fields: [kendaraanId], references: [id])
   kendaraanId       Int
   laporan           String
-  createdAt         DateTime  @default(now())
-  pelapor           User      @relation(fields: [pelapor_id], references: [id])
+  createdAt         DateTime            @default(now())
+  pelapor           User                @relation(fields: [pelapor_id], references: [id])
   pelapor_id        Int
   outputKlasifikasi OutputKlasifikasi[]
+  isDeleted         Boolean             @default(false)
 }
 
 model OutputKlasifikasi {
-  id            Int     @id @default(autoincrement())
-  laporan       Laporan @relation(fields: [laporanId], references: [id])
-  laporanId     Int
-  label         Label   @relation(fields: [labelId], references: [id])
-  labelId       Int
+  id        Int     @id @default(autoincrement())
+  laporan   Laporan @relation(fields: [laporanId], references: [id])
+  laporanId Int
+  label     Label   @relation(fields: [labelId], references: [id])
+  labelId   Int
+  isDeleted Boolean @default(false)
 }
 
 model Label {
-  id            Int @id @default(autoincrement())
-  indeks        Int
-  label         String
-  bobot         Int @default(0)
+  id                Int                 @id @default(autoincrement())
+  indeks            Int
+  label             String
+  bobot             Int                 @default(0)
   outputKlasifikasi OutputKlasifikasi[]
 }

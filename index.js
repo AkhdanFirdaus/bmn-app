@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const BASE_URL = process.env.BASE_URL;
+
 const path = require('path');
 const routes = require('./src/routes');
 
@@ -12,7 +14,7 @@ const cors = require('cors');
 const qrcode = require('qrcode');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const db = require('./src/db');
-const { getStatusPenggunaan } = require('./src/helpers');
+const { getStatusPenggunaan, checkAuthentication } = require('./src/helpers');
 
 const options = {
   cors: {
@@ -85,22 +87,38 @@ client.on('message', async (message) => {
   const command = message.body;
 
   if (command.startsWith('!help')) {
-    message.reply('Halo! ada yang bisa saya bantu?');
+    let responses = '';
+    responses += 'Halo! ada yang bisa saya bantu? \n\n';
+    responses += 'Berikut adalah perintah yang bisa kamu gunakan: \n';
+    responses += '!help - menampilkan pesan bantuan \n';
+    responses += '!daftar - menampilkan pesan daftar \n';
+    responses += '!kendaraan - menampilkan pesan kendaraan \n';
+    responses += '!kendaraan <id> - menampilkan detail kendaraan \n';
+    message.reply(responses);
   }
 
-  if (command.startsWith('!ping')) {
-    message.reply('pong');
-  }
-
-  if (command.startsWith('!echo')) {
-    const echo = command.replace('!echo', '');
-    message.reply(echo);
+  if (command.startsWith('!daftar')) {
+    const contact = await message.getContact();
+    let responses = '';
+    responses += 'Silahkan isi form pendaftaran berikut: \n';
+    responses += `${BASE_URL}/daftar?phone=${contact.id.user}`;
+    message.reply(responses);
   }
 
   if (command.startsWith('!kendaraan')) {
     const params = command.split(' ');
-    let responses = '';
+    const { number } = await message.getContact();
     
+    let responses = '';
+
+    const checkIfAuth = await checkAuthentication(number);
+
+    if (checkIfAuth instanceof Error) {
+      responses += 'Anda tidak terdaftar sebagai pengguna';
+      message.reply(responses);
+      return;
+    }
+
     if (params[1]) {
       responses += `Detail Kendaraan ${params[1]} \n\n`;
       try {
@@ -134,6 +152,11 @@ client.on('message', async (message) => {
       responses += '\n\nKetik !kendaraan <nomor> untuk melihat detail kendaraan';
     }
     
+    message.reply(responses);
+  }
+
+  if (!command.startsWith('!')) {
+    const responses = 'Maaf, saya tidak mengerti apa yang anda maksud. Silahkan ketik *!help* untuk melihat daftar perintah';
     message.reply(responses);
   }
 });

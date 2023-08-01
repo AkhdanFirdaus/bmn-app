@@ -110,7 +110,7 @@ function initLabel() {
 
 function init() {
   // initKendaraan();
-  initLabel();
+  // initLabel();
 }
 
 init();
