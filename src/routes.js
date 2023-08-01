@@ -40,8 +40,20 @@ routes.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
+routes.get('/laporan', async (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'laporan.html'));
+});
+
 routes.get('/kendaraan', async (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'kendaraan.html'));
+});
+
+routes.get('/kendaraan/:id', async (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'kendaraan_detail.html'));
+});
+
+routes.get('/penggunaan', async (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'penggunaan.html'));
 });
 
 routes.get('/daftar', async (req, res) => {

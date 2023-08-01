@@ -6,30 +6,68 @@
     <title>Document</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div class="flex flex-col h-full md:h-screen">
-        <header>
+<body class="bg-gray-100">
+    <div class="flex flex-col space-y-4 h-full md:h-screen">
+        <header class="bg-white">
             <nav class="flex flex-row justify-between md:justify-start py-2 px-6 w-full shadow gap-3">
                 <a href="/" class="text-lg no-underline text-gray-500 hover:text-blue-500">Home</a>
                 <a href="/kendaraan" class="text-lg no-underline text-gray-500 hover:text-blue-500">Kendaraan</a>
             </nav>
         </header>
-        <main class="flex-1 flex flex-col justify-center">
-            <div class="flex flex-col md:flex-row justify-center md:justify-between gap-4 flex-1 items-center">
-                <div class="text-left p-4">
-                    <h1 class="text-2xl">BMN App</h1>
-                    <p>Aplikasi untuk monitoring BMN</p>
+        <main class="flex-1 flex flex-col p-4 space-y-8 container mx-auto">
+            <section class="text-center">
+                <h1 class="text-4xl font-bold">BMN App</h1>
+                <p class="text-lg font-light">Aplikasi untuk monitoring BMN</p>
+            </section>
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-8 bg-white shadow rounded flex flex-col justify-center items-center">
+                    <div id="wrapper_qr" class="block space-y-4 text-center">
+                        <h1 class="text-lg">QR Code</h1>
+                        <p class="text-sm">Scan this qr to connect to chatbot</p>
+                        <img src="" width="200" height="200" alt="QRCode" id="qrcode">
+                    </div>
+                    <div id="wrapper_connected" class="hidden space-y-4 text-center">
+                        <div class="flex flex-row justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-12 h-12">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h1 class="text-lg">Chatbot is Online</h1>
+                        <p class="text-sm font-light">Silahkan kembali ke chatbot</p>
+                    </div>
                 </div>
-                <div class="text-center p-4">
-                    <h1>QR Code</h1>
-                    <p>Scan this qr to connect to chatbot</p>
-                    <img src="" width="200" height="200" alt="kosong" id="qrcode" class="visible">
+                <div class="p-8 bg-white shadow rounded">
+                    <div class="space-y-4 text-center">
+                        <h1 class="text-2xl"><strong id="jumlah_laporan">Jumlah</strong> Laporan</h1>
+                        <h1 class="text-xl">Lihat Laporan</h1>
+                        <div class="flex flex-row justify-center gap-4">
+                            <a href="/laporan" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded">Lihat</a>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="p-4 bg-gray-300 flex-1 flex flex-col">
-                <h1>Messages</h1>
-                <ul class="flex-1 overflow-y-auto" id="messages"></ul>
-            </div>
+                <div class="p-8 bg-white shadow rounded">
+                    <div class="space-y-4 text-center">
+                        <h1 class="text-2xl"><strong id="jumlah_kendaraan">Jumlah</strong> Kendaraan</h1>
+                        <h1 class="text-xl">Monitor kondisi kendaran</h1>
+                        <div class="flex flex-row justify-center gap-4">
+                            <a href="/kendaraan" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded">Lihat</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-8 bg-white shadow rounded">
+                    <div class="space-y-4 text-center">
+                        <h1 class="text-2xl"><strong id="jumlah_tersedia">Jumlah</strong> Tersedia</h1>
+                        <h1 class="text-xl">Lihat Penggunaan</h1>
+                        <div class="flex flex-row justify-center gap-4">
+                            <a href="/penggunaan" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded">Lihat</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="flex-1 flex flex-col">
+                <h1 class="text-2xl font-bold">Log Messages</h1>
+                <ul class="mt-2 flex-1 overflow-y-auto list-disc" id="messages"></ul>
+            </section>
         </main>
         <footer>
             <div class="flex flex-row justify-center gap-3 py-2 px-6 w-full border-2 border-gray-300">
@@ -42,33 +80,68 @@
     <script>
         var socket = io();
         
+        const qrWrapperEl = document.getElementById('wrapper_qr');
+        const connectedWrapperEl = document.getElementById('wrapper_connected');
         const qrcodeEl = document.getElementById('qrcode');
         const messagesEl = document.getElementById('messages');
 
-        socket.emit('is_authenticated', true);
-        
+        function getDateTime() {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const seconds = date.getSeconds();
+
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+        }
+
         socket.on('qr', (payload) => {
             qrcodeEl.setAttribute('src', payload);
         });
 
+        socket.on('data', (payload) => {
+            const jumlah_laporan = document.getElementById('jumlah_laporan');
+            const jumlah_kendaraan = document.getElementById('jumlah_kendaraan');
+            const jumlah_tersedia = document.getElementById('jumlah_tersedia');
+
+            jumlah_laporan.innerHTML = payload.jumlah_laporan ?? 0;
+            jumlah_kendaraan.innerHTML = payload.jumlah_kendaraan ?? 0;
+            jumlah_tersedia.innerHTML = payload.jumlah_tersedia ?? 0;
+        });
+
         socket.on('message', (payload) => {
-            if (payload.toLocaleLowerCase().includes('connected')) {
-                qrcodeEl.classList.toggle('visible');
-                qrcodeEl.classList.toggle('invisible');
+            if (payload.toLocaleLowerCase().includes('authenticated') || payload.toLocaleLowerCase().includes('connected')) {
+                qrWrapperEl.classList.toggle('block');
+                qrWrapperEl.classList.toggle('hidden');
+                connectedWrapperEl.classList.toggle('block');
+                connectedWrapperEl.classList.toggle('hidden');
             }
             
             if (payload.toLocaleLowerCase().includes('disconnected')) {
-                qrcodeEl.classList.toggle('visible');
-                qrcodeEl.classList.toggle('invisible');
+                qrWrapperEl.classList.toggle('block');
+                qrWrapperEl.classList.toggle('hidden');
+                connectedWrapperEl.classList.toggle('block');
+                connectedWrapperEl.classList.toggle('hidden');
             }
 
-            const element = document.createElement('li').textContent = payload
-            messagesEl.append(element);
+            const element = document.createElement('li');
+            element.innerHTML = `<small class="text-sm font-light">${getDateTime()}</small>: ${payload}`;
+
+            messagesEl.appendChild(element);
         });
 
         socket.on('clear_messages', () => {
-            messagesEl.innerHTML = '';
+            messagesEl.innerHTML = `<small class="text-sm font-light">${getDateTime()}</small>: Messages cleared`;
         });
+
+        function init() {
+            socket.emit('is_authenticated');
+            socket.emit('get_jumlah_data');
+        }
+
+        init();
     </script>
 </body>
 </html>

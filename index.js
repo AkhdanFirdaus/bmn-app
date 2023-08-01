@@ -49,7 +49,7 @@ io.on('connection', (socket) => {
     try {
       const contacts = await client.getContacts();
       if (contacts.length > 0) {
-        socket.emit('message', `a user (${socket.id}) Connected`);
+        socket.emit('message', `user (${socket.id}) Connected`);
       }
     } catch (error) {
       socket.emit('message', 'Whatsapp Disconnected');
@@ -66,6 +66,17 @@ io.on('connection', (socket) => {
     socket.emit('data', kendaraan);
   });
 
+  socket.on('get_jumlah_data', async () => {
+    socket.emit('message', 'Mengambil jumlah data kendaraan...');
+    const jumlahData = {
+      jumlah_kendaraan: await db.kendaraan.count(),
+      jumlah_tersedia: await db.riwayatPenggunaan.count(),
+      jumlah_laporan: await db.laporan.count(),
+    };
+    socket.emit('data', jumlahData);
+    socket.emit('message', 'Berhasil mengambil jumlah data kendaraan');
+  });
+
   client.on('qr', (qr) => {
     console.log(qr);
     qrcode.toDataURL(qr, (err, url) => {
@@ -75,7 +86,7 @@ io.on('connection', (socket) => {
 
   client.on('authenticated', () => {
     console.log('Chatbot: authenticated');
-    socket.emit('message', `a user (${socket.id}) Connected`);
+    socket.emit('message', `Chatbot (${socket.id}) Authenticated`);
   });
 
   client.on('disconnected', () => {
@@ -109,7 +120,8 @@ client.on('message', async (message) => {
 
   if (command.startsWith('!kendaraan')) {
     const params = command.split(' ');
-    const { number } = await message.getContact();
+    const contact = await message.getContact();
+    const number = contact.id.user;
     
     let responses = '';
 

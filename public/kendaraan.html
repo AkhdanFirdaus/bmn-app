@@ -47,30 +47,39 @@
     }
 
     function createCard(data) {
-      const { namaBarang, noPolisi, tglPerolehan, merk} = data
+      const { id, namaBarang, noPolisi, tglPerolehan, merk} = data
       return (
         `<div class="bg-white rounded shadow p-5 space-y-3">
-          <h1 class="text-lg font-bold">${merk}</h1>
-          <table>
-            <tbody>
-              <tr>
-                <td>Nama</td>
-                <th class="text-left text-sm">${namaBarang}</th>
-              </tr>
-              <tr>
-                <td>Nopol</td>
-                <th class="text-left text-sm">${noPolisi}</th>
-              </tr>
-              <tr>
-                <td>Umur</td>
-                <th class="text-left text-sm">${getAge(tglPerolehan)}</th>
-              </tr>
-              <tr>
-                <td>Kondisi</td>
-                <th class="text-left text-sm">Value</th>
-              </tr>
-            </tbody>
-          </table>
+          <div>
+            <h1 class="text-lg font-bold">${merk}</h1>
+          </div>
+          <div>
+            <table>
+              <tbody>
+                <tr>
+                  <td>Nama</td>
+                  <th class="text-left text-sm">${namaBarang}</th>
+                </tr>
+                <tr>
+                  <td>Nopol</td>
+                  <th class="text-left text-sm">${noPolisi}</th>
+                </tr>
+                <tr>
+                  <td>Umur</td>
+                  <th class="text-left text-sm">${getAge(tglPerolehan)}</th>
+                </tr>
+                <tr>
+                  <td>Kondisi</td>
+                  <th class="text-left text-sm">Value</th>
+                </tr>
+              </tbody>
+            </table>  
+          </div>
+          <div>
+            <a href="/kendaraan/${id}"" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+              Detail
+            </a>
+          </div>
         </div>`
       );
     }

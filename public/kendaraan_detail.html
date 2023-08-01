@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kendaraan Detail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <h1>Halaman Kendaraan Detail</h1>
+
+  <script>
+    function init() {
+      let params = document.location.toString().split('/');
+      let id = params[params.length - 1];
+      alert('ID: ' + id);
+    }
+
+    init();
+  </script>
+</body>
+</html>
