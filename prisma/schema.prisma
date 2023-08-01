@@ -57,6 +57,7 @@ model RiwayatPenggunaan {
   pengguna_id  Int
   kendaraan    Kendaraan @relation(fields: [kendaraan_id], references: [id])
   kendaraan_id Int
+  keterangan   String?
   mulai        DateTime  @default(now())
   selesai      DateTime?
   isApproved   Boolean   @default(false)
