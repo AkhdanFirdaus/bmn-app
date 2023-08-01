@@ -10,6 +10,17 @@ routes.get('/api', async (req, res) => {
   });
 });
 
+routes.get('/api/user/:phoneNumber', async (req, res) => {
+  const {phoneNumber} = req.params;
+  const user = await db.user.findFirst({
+    where: {phoneNumber},
+  });
+  res.json({
+    message: 'Success get user',
+    data: user,
+  });
+});
+
 routes.post('/api/daftar', async (req, res) => {
   const {nama, phoneNumber, pin} = req.body;
   const user = await db.user.create({

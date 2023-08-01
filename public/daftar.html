@@ -6,20 +6,117 @@
   <title>Registrasi</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-100">
   <div class="flex h-screen items-center justify-center">
-    <div class="w-1/3 h-1/3 p-6 rounded shadow bg-white">
-      <h1>Halaman Registrasi</h1>
-      <p>Phone Number: <span id="phone_number"></span></p>
+    <div class="w-full md:w-1/3 m-6 md:m-0 p-6 rounded shadow bg-white">
+      <div id="wrapper_has_user" class="hidden">
+        <div class="space-y-4 flex flex-col items-center">
+          <div>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>     
+          <h1 class="text-lg">Anda sudah terdaftar</h1>
+          <p class="text-sm">Halo, <strong id="user_name"></strong></p>
+          <p class="text-sm font-light">Silahkan kembali ke chatbot</p>
+        </div>
+      </div>
+      <div id="wrapper_form" class="block">
+        <h1 class="text-center">Halaman Registrasi</h1>
+        <form id="form_daftar" class="mt-6 space-y-4">
+          <div>
+            <label for="nama" class="block">Nama</label>
+            <input type="text" name="nama" id="nama" class="w-full border-2 border-gray-300 rounded p-2">
+          </div>
+          <div>
+            <label for="phone_number" class="block">No Whatsapp</label>
+            <input type="phone_number" name="phone_number" id="phone_number" disabled class="w-full border-2 border-gray-300 rounded p-2">
+          </div>
+          <div>
+            <label for="pin" class="block">PIN</label>
+            <input type="password" name="pin" id="pin" class="w-full border-2 border-gray-300 rounded p-2">
+          </div>
+          <div>
+            <label for="pin_confirmation" class="block">Konfirmasi pin</label>
+            <input type="password" name="pin_confirmation" id="pin_confirmation" class="w-full border-2 border-gray-300 rounded p-2">
+          </div>
+          <div>
+            <button type="submit" class="w-full bg-blue-500 text-white rounded p-2">Daftar</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
-    let queryParams = new URL(document.location).searchParams;
-    let phone = queryParams.get("phone");
-    
+    const wrapperHasUser = document.getElementById('wrapper_has_user');
+    const wrapperForm = document.getElementById('wrapper_form');
+    const userNameElement = document.getElementById('user_name');
+
+    const formDaftar = document.getElementById('form_daftar');
+    const namaElement = document.getElementById('nama');
     const phoneNumberElement = document.getElementById('phone_number');
-    phoneNumberElement.innerHTML = phone;
+    const pinElement = document.getElementById('pin');
+    const pinConfirmationElement = document.getElementById('pin_confirmation');
+
+    formDaftar.addEventListener('submit', function(e) {
+      e.preventDefault();
+      let nama = namaElement.value;
+      let phone = phoneNumberElement.value;
+      let pin = pinElement.value;
+      let pinConfirmation = pinConfirmationElement.value;
+
+      if (pin !== pinConfirmation) {
+        alert('PIN tidak sama');
+        return;
+      }
+
+      axios.post('/api/daftar', {
+        nama: nama,
+        phoneNumber: phone,
+        pin: pin
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(function (response) {
+        alert('Berhasil mendaftar');
+        formDaftar.reset();
+        getUser(phone);
+      })
+      .catch(function (error) {
+        alert('Gagal mendaftar', error);
+      });
+    });
+    
+    function getUser(phoneNumber) {
+      axios.get(`/api/user/${phoneNumber}`).then(function (response) {
+        console.log(response.data)
+        const user = response.data;
+        if (user) {
+          wrapperHasUser.classList.remove('hidden');
+          wrapperHasUser.classList.add('block');
+          wrapperForm.classList.remove('block');
+          wrapperForm.classList.add('hidden');
+          userNameElement.innerHTML = user.data.nama;
+        }
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+
+    function init() {
+      let queryParams = new URL(document.location).searchParams;
+      let phone = queryParams.get("phone");
+      phoneNumberElement.setAttribute('value', phone);
+
+      getUser(phone);
+    }
+
+
+    init();
   </script>
 </body>
 </html>

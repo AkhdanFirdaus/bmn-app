@@ -37,6 +37,8 @@ client.initialize();
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(cors(options));
+app.use(express.urlencoded({extended: true}));
+app.use(express.json());
 app.use('/', routes);
 
 io.on('connection', (socket) => {
