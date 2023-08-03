@@ -17,63 +17,66 @@ async function getSummary({callback}) {
   callback('Summary');
 }
 
-async function getPrediksi({laporan, pelapor, kendaraanId, callback}) {
-  const model_url = process.env.MODEL_URL || 'https://model.umum-pendis.online';
-  const result = await axios.post(`${model_url}/predict`, {
-    inputs: [laporan],
-  });
-
-  const { data } = result.data;
-
-  // TODO: save to output klasifikasi db
-  const hasil_laporan = await db.laporan.create({
-    data: {
-      laporan: laporan,
-      pelapor_id: pelapor,
-      kendaraanId: kendaraanId,
-    }
-  });
-  // const hasil_laporan = {id: 4};
-
-  
-  // TODO: dapatkan label yang terdeteksi
-  const outputs = [];
-  for (let i=0; i< data.outputs.length; i++) {
-    if (data.outputs[i] === 1) {
-      outputs.push(i);
-    }
-  }
-
-  const labels = await helpers.getLabels(outputs);
-  console.log(labels);
-  const labeled_output = [];
-  for (const item of labels) {
-    await db.outputKlasifikasi.create({
-      data: {
-        labelId: item.id,
-        laporanId: hasil_laporan.id,
+async function getPrediksi({laporan, pelapor, kendaraanId, callback, errorCallback}) {
+  try {
+    
+    const model_url = process.env.MODEL_URL || 'https://model.umum-pendis.online';
+    const labels = await helpers.getLabels();
+    const body = JSON.stringify({
+      labels,
+      inputs: [laporan, laporan],
+    });
+    const response = await axios.post(`${model_url}/predict`, body, {
+      headers: {
+        'Content-Type': 'application/json'
       }
     });
-    labeled_output.push(item.label);
-  }
-  const prediksi_kerusakan = labeled_output.map((item) => `- ${item}\n`).join('');
+    
+    const output = response.data.data.outputs[0];
+    let laporanId;
+
+    await db.$transaction(async (tx) => {
+      const hasil_laporan = await tx.laporan.create({
+        data: {
+          laporan: laporan,
+          pelapor_id: pelapor,
+          kendaraanId: kendaraanId,
+        }
+      });
+
+      laporanId = hasil_laporan.id;
+      
+      for (const label of output.label) {
+        const labelId = labels.find((item) => item.label === label).id;
+        await tx.outputKlasifikasi.create({
+          data: {
+            labelId: labelId,
+            laporanId: hasil_laporan.id,
+            isDeleted: false,
+          }
+        });
+      }
+    });
+    
+    const prediksi_kerusakan = output.label.join('\n');
+    
+    // TODO: dapatkan prediksi biaya perawatan dan suku cadang
   
-  // TODO: dapatkan prediksi biaya perawatan dan suku cadang
-
-
-  // TODO: Dapatkan indeks kerusakan
-  const severity = `\nindeks kerusakan = ${data.severity.index}\nlabel = ${data.severity.label}`;
-
-  const response = [
-    `pelapor = ${pelapor}`,
-    `id_laporan = ${hasil_laporan.id}`,
-    `id_kendaraan = ${kendaraanId}`,
-    '\n*Prediksi Kerusakan:*',
-    prediksi_kerusakan,
-    '\n*Kondisi:*',
-    severity,
-  ];
-  callback(response.join('\n'));
+    const messages = [
+      `Halo pelapor ${pelapor}`,
+      'Terima kasih telah melaporkan kerusakan kendaraan',
+      `Laporan *${laporanId}* telah diterima`,
+      '\n*Kendaraan:*',
+      '\n*Prediksi Kerusakan:*',
+      prediksi_kerusakan,
+      '\n*Kondisi:*',
+      `indeks kerusakan = ${output.severity}`,
+    ];
+    callback(messages.join('\n'));
+  } catch (error) {
+    console.log(error);
+    errorCallback('*Error: *', error);
+  }
 }
 
 async function getKendaraan({callback}) {

@@ -94,14 +94,19 @@ async function checkKendaraan(kendaraanId) {
 }
 
 async function getLabels(indexes = []) {
+  let query = {};
+  if (indexes.length > 0) {
+    query = {
+      where: {
+        indeks: {
+          in: indexes,
+        },
+      }
+    };
+  }
   const labels = await db.label.findMany({
-    where: {
-      indeks: {
-        in: indexes,
-      },
-    },
+    ...query,
   });
-  console.log('labels = ', labels);
   return labels;
 }
 

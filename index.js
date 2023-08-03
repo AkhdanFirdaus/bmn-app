@@ -31,9 +31,8 @@ const client = new Client({
   authStrategy: new LocalAuth(),
 });
 
-client.on('ready', (data) => {
+client.on('ready', () => {
   console.log('Chatbot: is ready');
-  console.log('Ready: ', data);
 });
 
 client.initialize();
@@ -48,17 +47,12 @@ io.on('connection', (socket) => {
   console.log(`Socket: a user (${socket.id}) Connected`);
 
   socket.on('is_authenticated', async () => {
-    console.log('ada permintaan untuk cek autentikasi');
     try {
-      const contacts = await client.getContacts();
-      if (contacts.length > 0) {
-        socket.emit('message', `user (${socket.id}) Connected`);
-      } else {
-        // client.emit('disconnected');
-      }
+      console.log('ada permintaan untuk cek autentikasi');
+      await client.getContacts();
+      socket.emit('message', `user (${socket.id}) Connected`);
     } catch (error) {
-      socket.emit('message', 'Whatsapp Disconnected');
-      // client.emit('disconnected');
+      socket.emit('message', 'Whatsapp Loading');
     }
   });
   
@@ -78,6 +72,16 @@ io.on('connection', (socket) => {
       callback: (jumlahData) => {
         socket.emit('data', jumlahData);
         socket.emit('message', 'Berhasil mengambil jumlah data kendaraan');
+      }
+    });
+  });
+
+  socket.on('get_laporan_summary', async () => {
+    socket.emit('message', 'Mengambil data laporan...');
+    await commandsFrontendController.getLaporanSummary({
+      callback: (data) => {
+        socket.emit('data', data);
+        socket.emit('message', 'Berhasil mengambil data laporan');
       }
     });
   });
@@ -236,9 +240,12 @@ client.on('message', async (message) => {
     await commandsController.getPrediksi({
       laporan: body,
       pelapor: checkIfAuth.id,
-      kendaraanId: 1,
+      kendaraanId: checkIfAuth.riwayatPenggunaan[0].kendaraan_id,
       callback: (response) => {
         message.reply(response);
+      },
+      errorCallback: (messages) => {
+        message.reply(messages);
       }
     });
   }
@@ -294,6 +301,9 @@ client.on('message', async (message) => {
       userId: checkIfAuth.id,
       callback: async (response) => {
         message.reply(response);
+      },
+      errorCallback: (messages) => {
+        message.reply(messages);
       }
     });
   }
@@ -302,10 +312,10 @@ client.on('message', async (message) => {
     const response = 'Maaf, saya tidak mengerti apa yang anda maksud. Silahkan ketik *!help* untuk melihat daftar perintah';
     message.reply(response);
   }
-
 });
 
 const port = process.env.PORT || 3003;
 server.listen(port, () => {
   console.log(`APP running on *:${port}`);
+  io.emit('message', 'Chatbot connecting');
 });

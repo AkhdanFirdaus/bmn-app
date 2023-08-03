@@ -1,11 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Laporan</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Halaman Laporan</h1>
+<body class="bg-gray-100">
+  <div class="flex flex-col space-y-4 h-full md:h-screen">
+      <header class="bg-white">
+        <nav class="flex flex-row justify-between md:justify-start py-2 px-6 w-full shadow gap-3">
+          <a href="/" class="text-lg no-underline text-gray-500 hover:text-blue-500">Home</a>
+          <a href="/laporan" class="text-lg no-underline text-gray-500 hover:text-blue-500">Laporan</a>
+          <a href="/kendaraan" class="text-lg no-underline text-gray-500 hover:text-blue-500">Kendaraan</a>
+        </nav>
+      </header>
+      <main class="flex-1 flex flex-col p-4 space-y-8 container mx-auto">
+        <section class="text-center">
+          <h1 class="text-4xl font-bold">Laporan</h1>
+          <p class="text-lg font-light">List Laporan Kendaraan</p>
+        </section>
+        <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="px-4 py-2 bg-white shadow rounded flex flex-col justify-center items-center space-y-2">
+            <h1 class="text-2xl font-bold" id="jumlah_laporan">0</h1>
+            <p class="text-sm font-light">Jumlah Laporan</p>
+          </div>  
+          <div class="px-4 py-2 bg-white shadow rounded flex flex-col justify-center items-center space-y-2">
+            <h1 class="text-2xl font-bold" id="jumlah_pelapor">0</h1>
+            <p class="text-sm font-light">Pelapor Aktif</p>
+          </div>
+          <div class="px-4 py-2 bg-white shadow rounded flex flex-col justify-center items-center space-y-2">
+            <h1 class="text-2xl font-bold" id="jumlah_masalah">0</h1>
+            <p class="text-sm font-light">Jumlah Masalah Terdeteksi</p>
+          </div>  
+          <div class="px-4 py-2 bg-white shadow rounded flex flex-col justify-center items-center space-y-2">
+            <h1 class="text-2xl font-bold" id="rata_kondisi">Baik</h1>
+            <p class="text-sm font-light">Rata-Rata Kondisi</p>
+          </div>
+        </section> 
+        <section class="flex-1">
+          <ul id="laporan_list" class="space-y-2">
+            <li class="bg-white rounded shadow px-6 py-2">Tidak Ada Laporan</li>
+          </ul>
+        </section>
+      </main>
+      <footer>
+        <div class="flex flex-row justify-center gap-3 py-2 px-6 w-full border-2 border-gray-300">
+          <p>Created by <a href="https://github.com/akhdanfirdaus">Akhdan Firdaus</a></p>
+        </div>
+      </footer>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    const jumlahLaporanEl = document.getElementById('jumlah_laporan');
+    const jumlahPelaporEl = document.getElementById('jumlah_pelapor');
+    const jumlahMasalahEl = document.getElementById('jumlah_masalah');
+    const rataKondisiEl = document.getElementById('rata_kondisi');
+
+    const laporanListEl = document.getElementById('laporan_list');
+  
+    var socket = io();
+    socket.on('data', (payload) => {
+      console.log(payload);
+      jumlahLaporanEl.innerHTML = payload.jumlah_laporan;
+      jumlahMasalahEl.innerHTML = payload.jumlah_pelapor;
+      jumlahMasalahEl.innerHTML = payload.jumlah_masalah;
+      rataKondisiEl.innerHTML = payload.rata_kondisi;
+
+      const laporan = Array.from(payload.laporan);
+
+      if (laporan.length > 0) {
+        laporanListEl.innerHTML = '';
+        laporan.forEach((item) => {
+          const element = document.createElement('li');
+          element.classList.add('bg-white', 'rounded', 'shadow', 'p-2', 'md:p-4', 'flex', 'flex-col', 'md:flex-row', 'justify-between', 'items-start', 'md:items-center', 'gap-4', 'md:gap-8');
+          element.innerHTML = `
+            <small class="text-sm font-light">${item.createdAt}</small>
+            <div class="flex-1">
+              <h1 class="text-lg font-bold">${item.pelapor.nama}</h1>
+              <p class="text-sm font-light">${item.laporan}</p>
+            </div>
+            <div class="flex-1">
+              <label class="text-xs font-light">Diagnosa</label>
+              <ul class="text-lg font-bold list-disc">
+                <li>Kerusakan Mesin</li>
+                <li>Interior Eksterior</li>
+              </ul>
+            </div>
+            <div>
+              <label class="text-xs font-light">Kendaraan</label>
+              <h1 class="text-lg font-bold">${item.kendaraan.merk}</h1>
+              <label class="text-xs font-light">No Polisi</label>
+              <p class="text-sm font-bold">${item.kendaraan.noPolisi}</p>
+            </div>
+            <div>
+              <label class="text-xs font-light">Kondisi</label>
+              <h1 class="text-lg font-bold">Baik</h1>
+              <label class="text-xs font-light">Kerusakan</label>
+              <h1 class="text-lg font-bold">4%</h1>
+            </div>
+          `;
+  
+          laporanListEl.appendChild(element);
+        });
+      }
+    });
+
+    function init() {
+      socket.emit('get_laporan_summary');
+    }
+
+    init();
+  </script>
 </body>
 </html>

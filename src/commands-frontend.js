@@ -17,6 +17,25 @@ async function getJumlahData({callback}) {
   callback(jumlahData);
 }
 
+async function getLaporanSummary({callback}) {
+  const laporanSummary = await db.laporan.findMany({
+    include: {
+      kendaraan: true,
+      pelapor: true,
+    }
+  });
+
+  const data = {
+    laporan: laporanSummary,
+    jumlah_laporan: laporanSummary.length,
+    jumlah_pelapor: 0,
+    jumlah_masalah: 0,
+    rata_kondisi: 'Baik',
+  };
+  callback(data);
+}
+
 module.exports = {
   getJumlahData,
+  getLaporanSummary,
 };
