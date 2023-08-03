@@ -31,10 +31,50 @@ function phoneNumberFormatter(number) {
   return formatted;
 }
 
-async function checkAuthentication(phoneNumber) {
+async function checkAuthentication(phoneNumber, getKendaraan=false) {
+  try {
+    let customQuery = {};
+    if (getKendaraan) {
+      customQuery = {
+        include: {
+          riwayatPenggunaan: {
+            select: {
+              kendaraan_id: true,
+            },
+            where: {
+              AND: [
+                {isApproved: true},
+                {selesai: null},
+              ]
+            },
+            orderBy: {
+              id: 'desc',
+            },
+            take: 1,
+          },
+        }
+      };
+    }
+    const user = await db.user.findFirstOrThrow({
+      where: {phoneNumber},
+      ...customQuery
+    });
+    return user;
+  } catch (error) {
+    console.log('Check authentication error: ', error);
+    return Error('User not found');
+  }
+}
+
+async function checkAuthenticationAdmin(phoneNumber) {
   try {
     const user = await db.user.findFirstOrThrow({
-      where: {phoneNumber}
+      where: {
+        AND: [
+          {phoneNumber},
+          {role: 'admin'},
+        ]
+      },
     });
     return user;
   } catch (error) {
@@ -42,8 +82,42 @@ async function checkAuthentication(phoneNumber) {
   }
 }
 
+async function checkKendaraan(kendaraanId) {
+  try {
+    const kendaraan = await db.kendaraan.findFirstOrThrow({
+      where: {id: parseInt(kendaraanId), isDeleted: false},
+    });
+    return kendaraan.id;
+  } catch (error) {
+    return Error('Kendaraan not found');
+  }
+}
+
+async function getLabel(index) {
+  const label = await db.label.findFirst({
+    where: {
+      indeks: index,
+    }
+  });
+  return label;
+}
+
+async function getAdmin() {
+  const admin = await db.user.findFirst({
+    where: {role: 'admin'},
+  });
+  return {
+    chatId: phoneNumberFormatter(admin.phoneNumber),
+    ...admin,
+  };
+}
+
 module.exports = {
   getStatusPenggunaan,
   phoneNumberFormatter,
   checkAuthentication,
+  checkAuthenticationAdmin,
+  checkKendaraan,
+  getLabel,
+  getAdmin,
 };

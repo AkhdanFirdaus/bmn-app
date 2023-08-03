@@ -14,7 +14,7 @@ const cors = require('cors');
 const qrcode = require('qrcode');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const db = require('./src/db');
-const { checkAuthentication } = require('./src/helpers');
+const helpers = require('./src/helpers');
 const commandsController = require('./src/commands');
 const commandsFrontendController = require('./src/commands-frontend');
 
@@ -31,8 +31,9 @@ const client = new Client({
   authStrategy: new LocalAuth(),
 });
 
-client.on('ready', () => {
+client.on('ready', (data) => {
   console.log('Chatbot: is ready');
+  console.log('Ready: ', data);
 });
 
 client.initialize();
@@ -52,9 +53,12 @@ io.on('connection', (socket) => {
       const contacts = await client.getContacts();
       if (contacts.length > 0) {
         socket.emit('message', `user (${socket.id}) Connected`);
+      } else {
+        // client.emit('disconnected');
       }
     } catch (error) {
       socket.emit('message', 'Whatsapp Disconnected');
+      // client.emit('disconnected');
     }
   });
   
@@ -78,6 +82,16 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('success_pinjam', async (data) => {
+    socket.emit('message', 'Mengirim data peminjaman...');
+    await commandsController.successPinjam({
+      peminjamanId: data,
+      callback: (response) => {
+        client.sendMessage(response.chatId, response.messages);
+      }
+    });
+  });
+
   client.on('qr', (qr) => {
     console.log(qr);
     qrcode.toDataURL(qr, (err, url) => {
@@ -85,8 +99,9 @@ io.on('connection', (socket) => {
     });
   });
 
-  client.on('authenticated', () => {
+  client.on('authenticated', (data) => {
     console.log('Chatbot: authenticated');
+    console.log('Authenticated ', data);
     socket.emit('message', `Chatbot (${socket.id}) Authenticated`);
   });
 
@@ -108,6 +123,8 @@ client.on('message', async (message) => {
       '!daftar - menampilkan pesan daftar',
       '!kendaraan - menampilkan pesan kendaraan',
       '!kendaraan <id> - menampilkan detail kendaraan',
+      '!pinjam <id> - mengajukan peminjaman kendaraan',
+      '!lapor <isi laporan> - melaporkan kondisi kendaraan',
     ];
     message.reply(response.join('\n'));
   }
@@ -125,8 +142,10 @@ client.on('message', async (message) => {
     const params = command.split(' ');
     const contact = await message.getContact();
     const number = contact.id.user;
+
+    console.log(contact);
     
-    const checkIfAuth = await checkAuthentication(number);
+    const checkIfAuth = await helpers.checkAuthentication(number);
 
     if (checkIfAuth instanceof Error) {
       message.reply('Anda tidak terdaftar sebagai pengguna');
@@ -150,30 +169,99 @@ client.on('message', async (message) => {
     
   }
 
-  if (command.startsWith('!lapor')) {
-    const body = command.replace('!lapor ', '');
+  if (command.startsWith('!pinjam')) {
+    const params = command.split(' ');
     const contact = await message.getContact();
     const number = contact.id.user;
     
-    const checkIfAuth = await checkAuthentication(number);
+    const checkIfAuth = await helpers.checkAuthentication(number, true);
 
     if (checkIfAuth instanceof Error) {
       message.reply('Anda tidak terdaftar sebagai pengguna');
       return;
     }
 
+    if (params[1]) {
+      const checkKendaraan = await helpers.checkKendaraan(params[1]);
+
+      if (checkKendaraan instanceof Error) {
+        message.reply('Kendaraan tidak ditemukan');
+        return;
+      }
+
+      const response = [
+        'Silahkan isi form peminjaman berikut:',
+        `${BASE_URL}/pinjam?phone=${number}&kendaraan=${checkKendaraan}`,
+      ];
+      message.reply(response.join('\n'));
+    } else {
+      message.reply('Silahkan ketik *!pinjam <id kendaraan>*');
+    }
+  }
+
+  if (command.startsWith('!lapor')) {
+    const body = command.replace('!lapor ', '');
+    const contact = await message.getContact();
+    const number = contact.id.user;
+    
+    const checkIfAuth = await helpers.checkAuthentication(number, true);
+
+    if (checkIfAuth instanceof Error) {
+      message.reply('Anda tidak terdaftar sebagai pengguna');
+      return;
+    }
+
+    console.log(checkIfAuth);
+
     await commandsController.getPrediksi({
       laporan: body,
+      pelapor: checkIfAuth.id,
+      kendaraanId: 1,
       callback: (response) => {
         message.reply(response);
       }
     });
   }
 
+  if (command.startsWith('!acc')) {
+    const params = command.split(' ');
+    const contact = await message.getContact();
+    const number = contact.id.user;
+    
+    const checkIfAdmin = await helpers.checkAuthenticationAdmin(number);
+
+    if (checkIfAdmin instanceof Error) {
+      message.reply('Anda bukan admin');
+      return;
+    }
+
+    if (params[1] === 'list') {
+      await commandsController.listPeminjaman({
+        callback: async (response) => {
+          message.reply(response);
+        }
+      });
+    } else if (!isNaN(parseInt(params[1]))) {
+      await commandsController.accPeminjaman({
+        peminjamanId: params[1],
+        callback: async (response) => {
+          message.reply(response.messages);
+          await client.sendMessage(response.chatId, response.messages);
+        },
+        errorCallback: (messages) => {
+          message.reply(messages);
+        }
+      });
+    } else {
+      message.reply('Silahkan ketik *!acc <id peminjaman>*');
+    }
+  }
+
   if (!command.startsWith('!')) {
     const response = 'Maaf, saya tidak mengerti apa yang anda maksud. Silahkan ketik *!help* untuk melihat daftar perintah';
     message.reply(response);
   }
+
 });
 
 const port = process.env.PORT || 3003;

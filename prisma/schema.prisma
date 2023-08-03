@@ -16,8 +16,9 @@ model User {
   phoneNumber       String
   pin               String
   laporan           Laporan[]
-  RiwayatPenggunaan RiwayatPenggunaan[]
+  riwayatPenggunaan RiwayatPenggunaan[]
   isActivated       Boolean             @default(false)
+  role              String              @default("user")
 }
 
 model Kendaraan {
@@ -47,7 +48,7 @@ model Kendaraan {
   pemakai               String?
   jumlahKib             Int                 @default(0)
   laporan               Laporan[]
-  RiwayatPenggunaan     RiwayatPenggunaan[]
+  riwayatPenggunaan     RiwayatPenggunaan[]
   isDeleted             Boolean             @default(false)
 }
 

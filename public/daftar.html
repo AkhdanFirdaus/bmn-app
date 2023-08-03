@@ -94,7 +94,7 @@
       axios.get(`/api/user/${phoneNumber}`).then(function (response) {
         console.log(response.data)
         const user = response.data;
-        if (user) {
+        if (user !== null) {
           wrapperHasUser.classList.remove('hidden');
           wrapperHasUser.classList.add('block');
           wrapperForm.classList.remove('block');
@@ -114,7 +114,6 @@
 
       getUser(phone);
     }
-
 
     init();
   </script>

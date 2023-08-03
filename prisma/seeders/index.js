@@ -109,8 +109,8 @@ function initLabel() {
 }
 
 function init() {
-  // initKendaraan();
-  // initLabel();
+  initKendaraan();
+  initLabel();
 }
 
 init();
