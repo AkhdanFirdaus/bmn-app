@@ -114,18 +114,38 @@ io.on('connection', (socket) => {
 
 client.on('message', async (message) => {
   const command = message.body;
-
+  const contact = await message.getContact();
+  const number = contact.id.user;
+  
+  
   if (command.startsWith('!help')) {
-    const response = [
-      'Halo! ada yang bisa saya bantu?\n',
-      'Berikut adalah perintah yang bisa kamu gunakan:',
-      '!help - menampilkan pesan bantuan',
-      '!daftar - menampilkan pesan daftar',
-      '!kendaraan - menampilkan pesan kendaraan',
-      '!kendaraan <id> - menampilkan detail kendaraan',
-      '!pinjam <id> - mengajukan peminjaman kendaraan',
-      '!lapor <isi laporan> - melaporkan kondisi kendaraan',
-    ];
+    let response;
+
+    const checkIfAdmin = await helpers.checkAuthenticationAdmin(number);
+  
+    if (checkIfAdmin instanceof Error) {
+      response = [
+        'Halo! ada yang bisa saya bantu?\n',
+        'Berikut adalah perintah yang bisa kamu gunakan:',
+        '*!help* - menampilkan pesan bantuan',
+        '*!daftar* - menampilkan pesan daftar',
+        '*!kendaraan* - menampilkan pesan kendaraan',
+        '*!kendaraan <id>* - menampilkan detail kendaraan',
+        '*!pinjam <id>* - mengajukan peminjaman kendaraan',
+        '*!lapor <isi laporan>* - melaporkan kondisi kendaraan',
+        '*!status* - melihat status peminjaman kendaraan',
+      ];
+    } else {
+      response = [
+        'Halo! ada yang bisa saya bantu?\n',
+        'Berikut adalah perintah yang bisa kamu gunakan:',
+        '!help - menampilkan pesan bantuan',
+        '!kendaraan - menampilkan pesan kendaraan',
+        '!kendaraan <id> - menampilkan detail kendaraan',
+        '!acc list - melihat semua permohonan peminjaman',
+        '!acc <id> - melakukan persetujuan peminjaman',
+      ];
+    }
     message.reply(response.join('\n'));
   }
 
@@ -255,6 +275,27 @@ client.on('message', async (message) => {
     } else {
       message.reply('Silahkan ketik *!acc <id peminjaman>*');
     }
+  }
+
+  if (command.startsWith('!status')) {
+    const contact = await message.getContact();
+    const number = contact.id.user;
+    
+    const checkIfAuth = await helpers.checkAuthentication(number, true);
+
+    if (checkIfAuth instanceof Error) {
+      message.reply('Anda tidak terdaftar sebagai pengguna');
+      return;
+    }
+
+    console.log(checkIfAuth);
+
+    await commandsController.getStatusPeminjaman({
+      userId: checkIfAuth.id,
+      callback: async (response) => {
+        message.reply(response);
+      }
+    });
   }
 
   if (!command.startsWith('!')) {

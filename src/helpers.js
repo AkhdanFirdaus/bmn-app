@@ -93,13 +93,16 @@ async function checkKendaraan(kendaraanId) {
   }
 }
 
-async function getLabel(index) {
-  const label = await db.label.findFirst({
+async function getLabels(indexes = []) {
+  const labels = await db.label.findMany({
     where: {
-      indeks: index,
-    }
+      indeks: {
+        in: indexes,
+      },
+    },
   });
-  return label;
+  console.log('labels = ', labels);
+  return labels;
 }
 
 async function getAdmin() {
@@ -118,6 +121,6 @@ module.exports = {
   checkAuthentication,
   checkAuthenticationAdmin,
   checkKendaraan,
-  getLabel,
+  getLabels,
   getAdmin,
 };

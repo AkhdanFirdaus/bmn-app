@@ -9,7 +9,7 @@ async function getSummary({callback}) {
   //     isDeleted: false,
   //   }
   // });
-
+  // ENDPOINT: /summary-predict
   // TODO: dapakan seluruh data output klasifikasi kendaraan berdasarkan isDeleted false
   // TODO: call api untuk prediksi kondisi kendaraan
   // TODO: call api untuk prediksi biaya perawatan dan suku cadang
@@ -26,42 +26,52 @@ async function getPrediksi({laporan, pelapor, kendaraanId, callback}) {
   const { data } = result.data;
 
   // TODO: save to output klasifikasi db
-  // const hasil_laporan = await db.laporan.create({
-  //   data: {
-  //     laporan: laporan,
-  //     pelapor_id: pelapor,
-  //     kendaraanId: kendaraanId,
-  //   }
-  // });
-  const hasil_laporan = {id: 1};
+  const hasil_laporan = await db.laporan.create({
+    data: {
+      laporan: laporan,
+      pelapor_id: pelapor,
+      kendaraanId: kendaraanId,
+    }
+  });
+  // const hasil_laporan = {id: 4};
+
   
-  // const outputKlasifikasi = await db.outputKlasifikasi.create({
-  //   data: {
-  //     laporanId: hasil_laporan.id,
-
-  //   }
-  // });
-
   // TODO: dapatkan label yang terdeteksi
-  let outputs = [];
-  for (let i=0; i<data.outputs.length; i++) {
+  const outputs = [];
+  for (let i=0; i< data.outputs.length; i++) {
     if (data.outputs[i] === 1) {
-      const label = await helpers.getLabel(i);
-      outputs.push(label.label);
+      outputs.push(i);
     }
   }
-  const labels = outputs.join(',');
+
+  const labels = await helpers.getLabels(outputs);
+  console.log(labels);
+  const labeled_output = [];
+  for (const item of labels) {
+    await db.outputKlasifikasi.create({
+      data: {
+        labelId: item.id,
+        laporanId: hasil_laporan.id,
+      }
+    });
+    labeled_output.push(item.label);
+  }
+  const prediksi_kerusakan = labeled_output.map((item) => `- ${item}\n`).join('');
   
   // TODO: dapatkan prediksi biaya perawatan dan suku cadang
 
+
+  // TODO: Dapatkan indeks kerusakan
   const severity = `\nindeks kerusakan = ${data.severity.index}\nlabel = ${data.severity.label}`;
 
   const response = [
     `pelapor = ${pelapor}`,
     `id_laporan = ${hasil_laporan.id}`,
     `id_kendaraan = ${kendaraanId}`,
-    `outputs = ${labels}`,
-    `severity: ${severity}`,
+    '\n*Prediksi Kerusakan:*',
+    prediksi_kerusakan,
+    '\n*Kondisi:*',
+    severity,
   ];
   callback(response.join('\n'));
 }
@@ -220,6 +230,11 @@ async function accPeminjaman({peminjamanId, callback, errorCallback}) {
   }
 }
 
+async function getStatusPeminjaman({userId, callback}) {
+  // TODO: Bikin Query untuk summary riwayat penggunaan dari riwayatPenggunaan dengan pengguna=userId
+  callback(`Halo ${userId} Maaf, fitur ini belum tersedia`);
+}
+
 module.exports = {
   getPrediksi,
   getKendaraan,
@@ -229,4 +244,5 @@ module.exports = {
   successPinjam,
   listPeminjaman,
   accPeminjaman,
+  getStatusPeminjaman
 };
