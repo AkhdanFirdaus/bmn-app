@@ -1,12 +1,58 @@
 const db = require('./db');
-const { checkAuthentication } = require('./helpers');
+const helpers = require('./helpers');
 
 async function getKendaraan(req, res) {
   try {
-    const kendaraan = await db.kendaraan.findMany();
+    // get type from query params
+    const {type} = req.query;
+
+    let query = {};
+
+    if (type === 'dengan-kondisi') {
+      query = {
+        include: {
+          laporan: {
+            where: {
+              isDeleted: false,
+            },
+            select: {
+              outputKlasifikasi: {
+                select: {
+                  label: {
+                    select: {
+                      id: true,
+                      label: true,
+                      bobot: true
+                    }
+                  }
+                },
+                where: {
+                  isDeleted: false,
+                }
+              }
+            }
+          }
+        }
+      };
+    }
+    const kendaraan = await db.kendaraan.findMany({...query});
+
+    const data = kendaraan.map((item) => {
+      if (type === 'dengan-kondisi') {
+        const kondisi = helpers.getKondisi(item.laporan);
+        delete item.laporan;
+        return {
+          ...item,
+          kondisi
+        };
+      } else {
+        delete item.laporan;
+        return item;
+      }
+    });
     res.json({
       message: 'Success get kendaraan',
-      data: kendaraan,
+      data,
     });
   } catch (error) {
     res.status(400).json({
@@ -19,13 +65,59 @@ async function getKendaraan(req, res) {
 async function getKendaraanDetail(req, res) {
   try {
     const {id} = req.params;
+    const {type} = req.query;
+
+    let query = {};
+
+    if (type === 'dengan-kondisi') {
+      query = {
+        include: {
+          laporan: {
+            where: {
+              isDeleted: false,
+            },
+            select: {
+              outputKlasifikasi: {
+                select: {
+                  label: {
+                    select: {
+                      id: true,
+                      label: true,
+                      bobot: true
+                    }
+                  }
+                },
+                where: {
+                  isDeleted: false,
+                }
+              }
+            }
+          }
+        }
+      };
+    }
+
     const kendaraan = await db.kendaraan.findFirst({
       where: {id: parseInt(id)},
+      ...query,
     });
-    res.json({
-      message: 'Success get kendaraan detail',
-      data: kendaraan,
-    });
+
+    if (type === 'dengan-kondisi') {
+      const kondisi = helpers.getKondisi(kendaraan.laporan);
+      delete kendaraan.laporan;
+      res.json({
+        message: 'Kondisi Kendaraan',
+        data: {
+          ...kendaraan,
+          kondisi
+        }
+      });
+    } else {
+      res.json({
+        message: 'Success get kendaraan detail',
+        data: kendaraan,
+      });
+    }
   } catch (error) {
     res.status(400).json({
       message: 'Failed get kendaraan detail',
@@ -80,7 +172,7 @@ async function postPinjam(req, res) {
 
     console.log(req.body);
 
-    const user = await checkAuthentication(phoneNumber);
+    const user = await helpers.checkAuthentication(phoneNumber);
     
     if (!user) {
       return res.status(401).json({

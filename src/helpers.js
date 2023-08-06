@@ -1,3 +1,4 @@
+// const { default: axios } = require('axios');
 const db = require('./db');
 
 /* eslint-disable indent */
@@ -120,6 +121,87 @@ async function getAdmin() {
   };
 }
 
+function getKondisi(hasilLaporan) {
+  const detected_labels = [];
+  const detected_problems = [];
+  const kondisiLabels = hasilLaporan.reduce((acc, curr) => {
+    acc.push(...curr.outputKlasifikasi.map((item) => {
+      if (!detected_labels.includes(item.label.id)) {
+        detected_labels.push(item.label.id);
+        detected_problems.push(item.label.label);
+      }
+      return item.label;
+    }));
+    return acc;
+  }, []);
+
+  const total_bobot = kondisiLabels.reduce((acc, curr) => {
+    return acc + curr.bobot;
+  }, 0);
+
+  const indeks = total_bobot / detected_labels.length;
+
+  return {
+    jml_laporan: hasilLaporan.length,
+    bobot: total_bobot,
+    jml_masalah: detected_labels.length,
+    masalah: detected_problems,
+    indeks: indeks ?? 0,
+    label: labelKerusakan(indeks),
+    persentase: getPecentage(indeks)
+  };
+}
+
+function getKondisiLaporan(outputKlasifikasi) {
+  const detected_labels = [];
+  const detected_problems = [];
+  const detected_bobot = [];
+  
+  outputKlasifikasi.forEach((item) => {
+    if (!detected_labels.includes(item.label.id)) {
+      detected_labels.push(item.label.id);
+      detected_problems.push(item.label.label);
+      detected_bobot.push(item.label.bobot);
+    }
+  });
+
+  const total_bobot = detected_bobot.reduce((acc, curr) => acc + curr, 0);
+
+  const indeks = total_bobot / detected_labels.length;
+
+  return {
+    bobot: total_bobot,
+    jml_masalah: detected_labels.length,
+    masalah: detected_problems,
+    indeks: indeks ?? 0,
+    label: labelKerusakan(indeks),
+    persentase: getPecentage(indeks)
+  };
+}
+
+function labelKerusakan(value) {
+  let nilai = Math.floor(value);
+  let label;
+  if (nilai >= 1 && nilai <= 3) {
+      label = 'Rusak Ringan';
+  } else if (nilai >= 4 && nilai <= 6) {
+      label = 'Rusak';
+  } else if (nilai >= 7 && nilai <= 10) {
+      label = 'Sangat Rusak';
+  } else {
+      label = 'Nilai tidak valid';
+  }
+  return label;
+}
+
+function getPecentage(value) {
+  if (value) {
+    return `${Math.round(value * 10)}%`;
+  } else {
+    return '0%';
+  }
+}
+
 module.exports = {
   getStatusPenggunaan,
   phoneNumberFormatter,
@@ -128,4 +210,8 @@ module.exports = {
   checkKendaraan,
   getLabels,
   getAdmin,
+  labelKerusakan,
+  getPecentage,
+  getKondisi,
+  getKondisiLaporan,
 };

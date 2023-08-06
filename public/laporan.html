@@ -64,7 +64,7 @@
     socket.on('data', (payload) => {
       console.log(payload);
       jumlahLaporanEl.innerHTML = payload.jumlah_laporan;
-      jumlahMasalahEl.innerHTML = payload.jumlah_pelapor;
+      jumlahPelaporEl.innerHTML = payload.jumlah_pelapor;
       jumlahMasalahEl.innerHTML = payload.jumlah_masalah;
       rataKondisiEl.innerHTML = payload.rata_kondisi;
 
@@ -74,18 +74,29 @@
         laporanListEl.innerHTML = '';
         laporan.forEach((item) => {
           const element = document.createElement('li');
-          element.classList.add('bg-white', 'rounded', 'shadow', 'p-2', 'md:p-4', 'flex', 'flex-col', 'md:flex-row', 'justify-between', 'items-start', 'md:items-center', 'gap-4', 'md:gap-8');
+          element.classList.add('bg-white', 'rounded', 'shadow', 'p-2', 'md:p-4', 'grid', 'grid-cols-1', 'md:grid-cols-4', 'gap-4', 'md:gap-8');
           element.innerHTML = `
-            <small class="text-sm font-light">${item.createdAt}</small>
-            <div class="flex-1">
-              <h1 class="text-lg font-bold">${item.pelapor.nama}</h1>
-              <p class="text-sm font-light">${item.laporan}</p>
+          <div class="flex-1 space-y-2">
+              <div>
+                <label class="text-xs font-light">Tanggal Laporan</label>
+                <p class="text-sm font-light">${item.createdAt}</p>
+              </div>
+              <div>
+                <label class="text-xs font-light">Pelapor</label>
+                <h1 class="text-lg font-bold">${item.pelapor.nama}</h1>
+              </div>
+              <div>
+                <label class="text-xs font-light">Laporan</label>
+                <p class="text-sm">${item.laporan}</p>
+              </div>
             </div>
             <div class="flex-1">
               <label class="text-xs font-light">Diagnosa</label>
               <ul class="text-lg font-bold list-disc">
-                <li>Kerusakan Mesin</li>
-                <li>Interior Eksterior</li>
+                ${item.kondisi.masalah.length > 0 
+                  ? item.kondisi.masalah.map((masalah) => `<li>${masalah}</li>`).join('') 
+                  : '<li>Tidak ada masalah</li>'
+                }
               </ul>
             </div>
             <div>
@@ -96,9 +107,9 @@
             </div>
             <div>
               <label class="text-xs font-light">Kondisi</label>
-              <h1 class="text-lg font-bold">Baik</h1>
-              <label class="text-xs font-light">Kerusakan</label>
-              <h1 class="text-lg font-bold">4%</h1>
+              <h1 class="text-lg font-bold">${item.kondisi.label}</h1>
+              <label class="text-xs font-light">Indeks Kerusakan</label>
+              <h1 class="text-lg font-bold">${item.kondisi.indeks}</h1>
             </div>
           `;
   

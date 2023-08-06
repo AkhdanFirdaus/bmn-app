@@ -19,13 +19,25 @@ async function getSummary({callback}) {
 
 async function getPrediksi({laporan, pelapor, kendaraanId, callback, errorCallback}) {
   try {
-    
     const model_url = process.env.MODEL_URL || 'https://model.umum-pendis.online';
+
+    const kendaraan = await db.kendaraan.findFirst({
+      where: {
+        id: kendaraanId,
+      },
+    });
+    const kendaraanmsg = [
+      `Merk: ${kendaraan.merk}`,
+      `No Polisi: ${kendaraan.noPolisi}`,
+    ].join('\n');
+
     const labels = await helpers.getLabels();
+
     const body = JSON.stringify({
       labels,
       inputs: [laporan, laporan],
     });
+
     const response = await axios.post(`${model_url}/predict`, body, {
       headers: {
         'Content-Type': 'application/json'
@@ -63,10 +75,10 @@ async function getPrediksi({laporan, pelapor, kendaraanId, callback, errorCallba
     // TODO: dapatkan prediksi biaya perawatan dan suku cadang
   
     const messages = [
-      `Halo pelapor ${pelapor}`,
-      'Terima kasih telah melaporkan kerusakan kendaraan',
-      `Laporan *${laporanId}* telah diterima`,
+      'Halo! Terima kasih telah melaporkan kerusakan kendaraan',
+      `Laporan *No.${laporanId}* telah diterima`,
       '\n*Kendaraan:*',
+      kendaraanmsg,
       '\n*Prediksi Kerusakan:*',
       prediksi_kerusakan,
       '\n*Kondisi:*',
@@ -235,7 +247,30 @@ async function accPeminjaman({peminjamanId, callback, errorCallback}) {
 
 async function getStatusPeminjaman({userId, callback}) {
   // TODO: Bikin Query untuk summary riwayat penggunaan dari riwayatPenggunaan dengan pengguna=userId
-  callback(`Halo ${userId} Maaf, fitur ini belum tersedia`);
+  const riwayatPenggunaan = await db.riwayatPenggunaan.findMany({
+    where: {
+      pengguna_id: parseInt(userId),
+    },
+    include: {
+      kendaraan: true,
+    }
+  });
+
+  const riwayatlist = riwayatPenggunaan.map((item) => {
+    return [
+      item.kendaraan.merk,
+      `Mulai: ${item.mulai}`,
+      `Selesai: ${item.selesai ?? '-'}`,
+      `Keterangan: ${item.keterangan ?? '-'}`,
+      `Kondisi: ${234}`
+    ].join('\n');
+  }).join('\n');
+
+  const messages = [
+    'Peminjaman\n',
+    riwayatlist
+  ];
+  callback(messages.join('\n'));
 }
 
 module.exports = {

@@ -1,4 +1,5 @@
 const db = require('./db');
+const helpers = require('./helpers');
 
 async function getJumlahData({callback}) {
   const jumlahData = {
@@ -22,13 +23,41 @@ async function getLaporanSummary({callback}) {
     include: {
       kendaraan: true,
       pelapor: true,
+      outputKlasifikasi: {
+        select: {
+          label: {
+            select: {
+              id: true,
+              label: true,
+              bobot: true
+            }
+          }
+        },
+        where: {
+          isDeleted: false,
+        }
+      }
     }
   });
 
+  const pelapor_aktif = [];
+
+  const laporan = laporanSummary.map((item) => {
+    if (!pelapor_aktif.includes(item.pelapor_id)) {
+      pelapor_aktif.push(item.pelapor_id);
+    }
+    const kondisi = helpers.getKondisiLaporan(item.outputKlasifikasi);
+    delete item.outputKlasifikasi;
+    return {
+      ...item,
+      kondisi,
+    };
+  });
+
   const data = {
-    laporan: laporanSummary,
-    jumlah_laporan: laporanSummary.length,
-    jumlah_pelapor: 0,
+    laporan: laporan,
+    jumlah_laporan: laporan.length,
+    jumlah_pelapor: pelapor_aktif.length,
     jumlah_masalah: 0,
     rata_kondisi: 'Baik',
   };
