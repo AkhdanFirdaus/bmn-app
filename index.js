@@ -121,33 +121,32 @@ client.on('message', async (message) => {
   const contact = await message.getContact();
   const number = contact.id.user;
   
-  
   if (command.startsWith('!help')) {
     let response;
 
     const checkIfAdmin = await helpers.checkAuthenticationAdmin(number);
   
+    const defaultcommands = [
+      'Halo! ada yang bisa saya bantu?\n',
+      'Berikut adalah perintah yang bisa kamu gunakan:',
+      '*!help* - menampilkan pesan bantuan',
+      '*!kendaraan* - menampilkan pesan kendaraan',
+      '*!kendaraan <id>* - menampilkan detail kendaraan',
+    ];
+    
     if (checkIfAdmin instanceof Error) {
       response = [
-        'Halo! ada yang bisa saya bantu?\n',
-        'Berikut adalah perintah yang bisa kamu gunakan:',
-        '*!help* - menampilkan pesan bantuan',
-        '*!daftar* - menampilkan pesan daftar',
-        '*!kendaraan* - menampilkan pesan kendaraan',
-        '*!kendaraan <id>* - menampilkan detail kendaraan',
+        ...defaultcommands,
         '*!pinjam <id>* - mengajukan peminjaman kendaraan',
+        '*!daftar* - menampilkan pesan daftar',
         '*!lapor <isi laporan>* - melaporkan kondisi kendaraan',
         '*!status* - melihat status peminjaman kendaraan',
       ];
     } else {
       response = [
-        'Halo! ada yang bisa saya bantu?\n',
-        'Berikut adalah perintah yang bisa kamu gunakan:',
-        '!help - menampilkan pesan bantuan',
-        '!kendaraan - menampilkan pesan kendaraan',
-        '!kendaraan <id> - menampilkan detail kendaraan',
-        '!acc list - melihat semua permohonan peminjaman',
-        '!acc <id> - melakukan persetujuan peminjaman',
+        ...defaultcommands,
+        '*!acc list* - melihat semua permohonan peminjaman',
+        '*!acc <id>* - melakukan persetujuan peminjaman',
       ];
     }
     message.reply(response.join('\n'));
@@ -309,8 +308,11 @@ client.on('message', async (message) => {
   }
 
   if (!command.startsWith('!')) {
-    const response = 'Maaf, saya tidak mengerti apa yang anda maksud. Silahkan ketik *!help* untuk melihat daftar perintah';
-    message.reply(response);
+    const response = [
+      'Maaf, saya tidak mengerti apa yang anda maksud.',
+      'Silahkan ketik *!help* untuk melihat daftar perintah'
+    ];
+    message.reply(response.join('/n'));
   }
 });
 
