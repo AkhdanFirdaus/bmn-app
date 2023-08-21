@@ -77,12 +77,13 @@ model Laporan {
 }
 
 model OutputKlasifikasi {
-  id        Int     @id @default(autoincrement())
-  laporan   Laporan @relation(fields: [laporanId], references: [id])
-  laporanId Int
-  label     Label?  @relation(fields: [labelId], references: [id])
-  labelId   Int?
-  isDeleted Boolean @default(false)
+  id            Int     @id @default(autoincrement())
+  laporan       Laporan @relation(fields: [laporanId], references: [id])
+  laporanId     Int
+  label         Label?  @relation(fields: [labelId], references: [id])
+  labelId       Int?
+  estimasiBiaya Float   @default(0)
+  isDeleted     Boolean @default(false)
 }
 
 model Label {
