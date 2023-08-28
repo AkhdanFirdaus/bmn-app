@@ -91,5 +91,8 @@ model Label {
   indeks            Int
   label             String
   bobot             Int                 @default(0)
+  minBiaya          Int                 @default(0)
+  maxBiaya          Int                 @default(0)
+  rataRataBiaya     Int                 @default(0)
   outputKlasifikasi OutputKlasifikasi[]
 }

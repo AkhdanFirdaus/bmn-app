@@ -1,0 +1,12 @@
+indeks,kerusakan,bobot,minBiaya,maxBiaya,rataRataBiaya
+0.0,masalah sistem knalpot,3.0,50000.0,1250000.0,100000.0
+1.0,masalah transmisi,4.0,50000.0,12500000.0,100000.0
+2.0,masalah suspensi,3.0,50000.0,2750000.0,150000.0
+3.0,gangguan listrik,4.0,15000.0,15000000.0,25000.0
+4.0,masalah sistem bahan bakar,4.0,60000.0,1250000.0,150000.0
+5.0,masalah kemudi,4.0,50000.0,6000000.0,150000.0
+6.0,masalah ban,4.0,50000.0,1600000.0,150000.0
+7.0,masalah mesin,5.0,35000.0,5500000.0,100000.0
+8.0,kegagalan rem,5.0,50000.0,900000.0,900000.0
+9.0,masalah sistem pendingin,3.0,30000.0,3250000.0,150000.0
+10.0,kerusakan aksesoris interior eksterior,1.0,10000.0,2500000.0,150000.0

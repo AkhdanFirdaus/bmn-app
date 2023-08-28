@@ -76,40 +76,57 @@ function initKendaraan() {
 
 function initLabel() {
   const data = [];
-  const location = path.resolve(__dirname, 'dataset/raw_kategori_kerusakan.csv');
+  const location = path.resolve(__dirname, 'dataset/data_label.csv');
   const file = fs.createReadStream(location);
   papa.parse(file, {
     header: true,
     delimiter: ',',
     step: function (results) {
       const label = results.data;
-      const keys = Object.keys(label);
-      const newKeys = keys.map(key => toCamelCase(key));
-      const newLabel = {};
-      for (let i = 0; i < newKeys.length; i++) {
-        const key = newKeys[i];
-        newLabel[key] = label[keys[i]];
-      }
-      data.push(newLabel);
+      data.push(label);
     },
     complete: async function() {
-      let i=0;
       for (const lbl of data) {
-        await db.label.create({
-          data: {
-            label: lbl.kerusakan,
-            bobot: lbl.bobot ? parseInt(lbl.bobot) : 0,
-            indeks: i,
-          },
+        const available = await db.label.findFirst({
+          where: {
+            indeks: parseInt(lbl.indeks),
+          }
         });
-        i++;
+
+        if (available) {
+          await db.label.update({
+            where: {
+              id: available.id
+            },
+            data: {
+              label: lbl.kerusakan,
+              bobot: parseInt(lbl.bobot),
+              indeks: parseInt(lbl.indeks),
+              maxBiaya: parseFloat(lbl.maxBiaya),
+              minBiaya: parseFloat(lbl.minBiaya),
+              rataRataBiaya: parseFloat(lbl.rataRataBiaya),
+            },
+          });
+        } else {
+          await db.label.create({
+            data: {
+              label: lbl.kerusakan,
+              bobot: parseInt(lbl.bobot),
+              indeks: parseInt(lbl.indeks),
+              maxBiaya: parseFloat(lbl.maxBiaya),
+              minBiaya: parseFloat(lbl.minBiaya),
+              rataRataBiaya: parseFloat(lbl.rataRataBiaya),
+            },
+          });
+
+        }
       }
     }
   });
 }
 
 function init() {
-  initKendaraan();
+  // initKendaraan();
   initLabel();
 }
 

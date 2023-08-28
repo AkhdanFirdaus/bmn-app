@@ -1,5 +1,5 @@
 node_modules
-prisma/seeders/dataset
+# prisma/seeders/dataset
 .wwebjs_auth
 
 .env
