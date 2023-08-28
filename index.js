@@ -312,7 +312,7 @@ client.on('message', async (message) => {
       'Maaf, saya tidak mengerti apa yang anda maksud.',
       'Silahkan ketik *!help* untuk melihat daftar perintah'
     ];
-    message.reply(response.join('/n'));
+    message.reply(response.join('\n'));
   }
 });
 

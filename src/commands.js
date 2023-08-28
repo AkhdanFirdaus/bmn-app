@@ -1,6 +1,7 @@
 const { default: axios } = require('axios');
 const db = require('./db');
 const helpers = require('./helpers');
+const { model_url } = require('./constants');
 
 async function getSummary({callback}) {
   // const klasifikasi = await db.outputKlasifikasi.groupBy({
@@ -19,8 +20,6 @@ async function getSummary({callback}) {
 
 async function getPrediksi({laporan, pelapor, kendaraanId, callback, errorCallback}) {
   try {
-    const model_url = process.env.MODEL_URL || 'https://model.umum-pendis.online';
-
     const kendaraan = await db.kendaraan.findFirst({
       where: {
         id: kendaraanId,
@@ -87,7 +86,7 @@ async function getPrediksi({laporan, pelapor, kendaraanId, callback, errorCallba
     callback(messages.join('\n'));
   } catch (error) {
     console.log(error);
-    errorCallback('*Error: *', error);
+    errorCallback('*Terjadi kesalahan:* ', error ?? 'Model tidak dapat memproses laporan');
   }
 }
 

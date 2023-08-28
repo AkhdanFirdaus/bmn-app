@@ -58,7 +58,7 @@ function initKendaraan() {
             nilaiBuku: data.nilaiBuku ? parseInt(data.nilaiBuku) : 0,
             kuantitas: data.kuantitas ? parseInt(data.kuantitas) : 1,
             jmlFoto: data.jmlFoto ? parseInt(data.jmlFoto) : 0,
-            // 0 tidak digunakan, 1 digunakan dinas operasional, 2 digunakan dinas jabatan
+            // 0 digunakan dinas operasional, 1 digunakan dinas jabatan
             statusPenggunaan: data === 'Digunakan sendiri untuk operasional' ? 0 : 1,
             statusPengelolaan: data.statusPengelolaan,
             noPsp: data.noPsp,
