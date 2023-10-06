@@ -76,6 +76,58 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('get_kendaraan_detail', async (data) => {
+    try {
+      socket.emit('message', 'Mengambil data kendaraan');
+      const kendaraan = await db.kendaraan.findFirstOrThrow({
+        where: {
+          id: parseInt(data),
+        },
+        include: {
+          laporan: {
+            select: {
+              laporan: true,
+              createdAt: true,
+              pelapor: {
+                select: {
+                  nama: true
+                }
+              },
+              outputKlasifikasi: {
+                select: {
+                  label: {
+                    select: {
+                      label: true,
+                      bobot: true,
+                    }
+                  }
+                },
+              }
+            }
+          },
+          riwayatPenggunaan: {
+            select: {
+              pengguna: {
+                select: {
+                  nama: true,
+                  phoneNumber: true,
+                },
+              },
+              keterangan: true,
+              mulai: true,
+              selesai: true,
+            }
+          },
+        }
+      });
+      console.log(kendaraan);
+      socket.emit('data', kendaraan);
+    } catch (error) {
+      socket.emit('message', 'terjadi kesalahan');
+      socket.emit('data', error);
+    }
+  });
+
   socket.on('get_laporan_summary', async () => {
     socket.emit('message', 'Mengambil data laporan...');
     await commandsFrontendController.getLaporanSummary({

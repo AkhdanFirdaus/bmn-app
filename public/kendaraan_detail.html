@@ -5,15 +5,229 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kendaraan Detail</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    tr > th {
+      text-align: left;
+    }
+  </style>
 </head>
 <body>
-  <h1>Halaman Kendaraan Detail</h1>
+  <div class="container mx-auto p-4 flex flex-col space-y-5 h-screen">
+    <div>
+      <h1 id="header" class="font-bold text-2xl">Halaman Kendaraan Detail</h1>
+    </div>
 
+    <div>
+      <table>
+        <tr>
+          <th>NUP</th>
+          <td id="nup">nup</td>
+        </tr>
+
+        <tr>
+          <th>Tahun</th>
+          <td id="year">2010</td>
+        </tr>
+        
+        <tr>
+          <th>Nomor Polisi</th>
+          <td id="vehicle_no">D 1234 BGS</td>
+        </tr>
+        
+        <tr>
+          <th>Pemakai</th>
+          <td id="pemakai">nama pemakai</td>
+        </tr>
+
+        <tr>
+          <th>Kondisi</th>
+          <td id="condition">Baik</td>
+        </tr>
+      </table>
+    </div>
+
+    <hr />
+
+    <div class="flex-1 space-y-5">
+      <h3>Riwayat Laporan</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="riwayatLaporan"></div>
+    </div>
+
+    <hr />
+
+    <div class="flex-1 space-y-5">
+      <h3>Riwayat Pemakaian</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="riwayatPemakaian"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script>
+    var socket = io();
+    
+    const riwayatLaporan = document.getElementById('riwayatLaporan')
+    const riwayatPemakaian = document.getElementById('riwayatPemakaian')
+
+    function convertDateString(dateString) {
+      const date = new Date(dateString);
+      const day = date.getDate();
+      const month = date.toLocaleString('default', { month: 'long' });
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
+    }
+
+    function funkerusakan(data) {
+      if (data < 1) {
+        return 'Ringan'
+      } else if (data >= 1 && data <= 3) {
+        return 'Ringan'
+      } else if (data >= 4 && data <= 7) {
+        return 'Rusak'
+      } else if (data >= 8 && data <= 10) {
+        return 'Parah'
+      } else {
+        return 'Rusak'
+      }
+    }
+    function weightedProduct(bobot, skalaKepentingan, skalaKerusakan) {
+      // Langkah 2: Normalisasi Bobot
+      const totalBobot = bobot.reduce((sum, w) => sum + w, 0);
+      const bobotTernormalisasi = bobot.map(w => w / totalBobot);
+      
+      // Langkah 3: Hitung Produk Bobot dan Skala Kepentingan
+      const produkBobotSkala = bobotTernormalisasi.map(w =>
+          skalaKepentingan.map(sk => w * sk)
+      );
+      
+      // Langkah 4: Jumlahkan Hasil Produk
+      const totalProduk = produkBobotSkala.map(produk =>
+          produk.reduce((sum, value) => sum + value, 0)
+      );
+      
+      // Langkah 5: Tentukan Skala Kerusakan
+      const hasilSkalaKerusakan = totalProduk.map(produk =>
+          skalaKerusakan[produk - 1]
+      );
+      
+      return hasilSkalaKerusakan;
+    }
+
+    function cardItem(data) {
+      return (
+        `<div class="border-black border-2 rounded-sm px-4 py-2 flex flex-col space-y-2">
+          <div class="flex flex-row justify-between items-center">
+            <div>
+              <p class="font-bold"><small>Laporan</small></p>
+              <h2 class="text-lg">${data.laporan}</h2>
+            </div>
+          </div>
+          <hr />
+          <div class="flex flex-row justify-between items-center">
+            <div class="flex-1 flex-wrap">
+              <p class="font-bold"><small>Kerusakan</small></p>
+              <p>${data.outputKlasifikasi.map(item => item.label.label).join(', ')}</p>
+            </div>
+            <h1 class="text-4xl font-bold">${data.outputKlasifikasi.reduce((prev, next) => prev + next.label.bobot, 0)}</h1>
+          </div>
+          <hr />
+          <div class="flex flex-row justify-between items-center">
+            <div>
+              <p class="font-bold"><small>Oleh</small></p>
+              <h2 class="text-lg">${data.pelapor.nama}</h2>
+            </div>
+            <small>${convertDateString(data.createdAt)}</small>
+          </div>
+      </div>`
+      )
+    }
+
+    function pemakaianItem(data) {
+      return (
+        `<div class="border-black border-2 rounded-sm px-4 py-2 flex flex-col space-y-2">
+          <div class="flex flex-row justify-between items-center">
+            <div>
+              <p class="font-bold"><small>Keterangan</small></p>
+              <h2 class="text-lg">${data.keterangan}</h2>
+            </div>
+          </div>
+          <hr />
+          <div class="flex flex-row justify-between items-center">
+            <div>
+              <p class="font-bold"><small>Mulai</small></p>
+              <h2 class="text-lg">${convertDateString(data.mulai)}</h2>
+            </div>
+            <div>
+              <p class="font-bold"><small>Selesai</small></p>
+              <small>${data.selesai ? convertDateString(data.selesai) : 'Belum Dikembalikan'}</small>
+            </div>
+          </div>
+          <hr />
+          <div class="flex flex-row justify-between items-center">
+            <h2>${data.pengguna.nama}<br/><small>${data.pengguna.phoneNumber}</small></h2>
+          </div>
+      </div>`
+      )
+    }
+        // <div class="flex flex-row justify-between items-center">
+        //   <h2 class="text-lg">${JSON.stringify(data.laporan.outputKlasifikasi)}</h2>
+        //   <small>${data.createdAt}</small>
+        // </div>
+
     function init() {
       let params = document.location.toString().split('/');
       let id = params[params.length - 1];
-      alert('ID: ' + id);
+      
+      socket.emit('get_kendaraan_detail', id);
+      socket.on('data', (data) => {
+        console.log(data)
+        
+        // let bobot = [];
+        // let skalaKepentingan = []; 
+        // let skalaKerusakan = []; 
+
+        // data.laporan.forEach(laporan => {
+        //   laporan.outputKlasifikasi.forEach(element => {
+        //     bobot.push(element.label.bobot);
+
+        //     if (element.label.bobot >= 1 && element.label.bobot <= 3) {
+        //       skalaKerusakan.push(1)
+        //     } else if (element.label.bobot >= 4 && element.label.bobot <= 7) {
+        //       skalaKerusakan.push(2)
+        //     } else if (element.label.bobot >= 8 && element.label.bobot <= 10) {
+        //       skalaKerusakan.push(3)
+        //     }
+        //     bobot.push(element.label.bobot);
+        //   });
+        // });
+        // const hasil = weightedProduct(bobot, skalaKepentingan, skalaKerusakan);
+        const indeks = data.laporan.reduce((prev, next) => prev + next.outputKlasifikasi.reduce((prev, next) => prev + next.label.bobot, 0), 0);
+        
+        document.getElementById('header').innerHTML = data.merk;
+        document.getElementById('nup').innerHTML = data.nup
+        document.getElementById('year').innerHTML = data.tglPerolehan
+        document.getElementById('condition').innerHTML = ((indeks/4) ?? 0) + ' (' + funkerusakan(indeks) + ')'
+        document.getElementById('vehicle_no').innerHTML = data.noPolisi
+        document.getElementById('pemakai').innerHTML = data.pemakai
+
+        
+        data.laporan.map((item, index) => {
+          const card = document.createElement('div');
+          card.innerHTML = cardItem(item);
+          riwayatLaporan.append(card);
+        });
+
+        data.riwayatPenggunaan.map((item, index) => {
+          const card = document.createElement('div');
+          card.innerHTML = pemakaianItem(item);
+          riwayatPemakaian.append(card);
+        })
+      });
+
+      Array.from(3).forEach(item => {
+        const card = document.createElement('div');
+        card.innerHTML = item();
+        riwayat.append(card);
+      });
     }
 
     init();

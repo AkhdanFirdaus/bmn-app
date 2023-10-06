@@ -258,10 +258,11 @@ async function getStatusPeminjaman({userId, callback}) {
   const riwayatlist = riwayatPenggunaan.map((item) => {
     return [
       item.kendaraan.merk,
-      `Mulai: ${item.mulai}`,
-      `Selesai: ${item.selesai ?? '-'}`,
+      `Tahun (Umur): ${helpers.getAge(item.kendaraan.tglPerolehan)}`,
+      `Mulai Pinjam: ${helpers.convertDateString(item.mulai)}`,
+      `Status: ${item.selesai !== null ? 'Selesai' : 'Belum Selesai'}`,
       `Keterangan: ${item.keterangan ?? '-'}`,
-      `Kondisi: ${234}`
+      'Kondisi: Baik'
     ].join('\n');
   }).join('\n');
 

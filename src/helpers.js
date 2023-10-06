@@ -202,6 +202,48 @@ function getPecentage(value) {
   }
 }
 
+function getAge(dateString) {
+  var today = new Date();
+  var birthDate = new Date(dateString);
+  var age = today.getFullYear() - birthDate.getFullYear();
+  var m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+  }
+  return age ?? 0;
+}
+
+function convertDateString(dateString) {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const month = date.toLocaleString('default', { month: 'long' });
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+function weightedProduct(bobot, skalaKepentingan, skalaKerusakan) {
+  // Langkah 2: Normalisasi Bobot
+  const totalBobot = bobot.reduce((sum, w) => sum + w, 0);
+  const bobotTernormalisasi = bobot.map(w => w / totalBobot);
+  
+  // Langkah 3: Hitung Produk Bobot dan Skala Kepentingan
+  const produkBobotSkala = bobotTernormalisasi.map(w =>
+      skalaKepentingan.map(sk => w * sk)
+  );
+  
+  // Langkah 4: Jumlahkan Hasil Produk
+  const totalProduk = produkBobotSkala.map(produk =>
+      produk.reduce((sum, value) => sum + value, 0)
+  );
+  
+  // Langkah 5: Tentukan Skala Kerusakan
+  const hasilSkalaKerusakan = totalProduk.map(produk =>
+      skalaKerusakan[produk - 1]
+  );
+  
+  return hasilSkalaKerusakan;
+}
+
 module.exports = {
   getStatusPenggunaan,
   phoneNumberFormatter,
@@ -214,4 +256,7 @@ module.exports = {
   getPecentage,
   getKondisi,
   getKondisiLaporan,
+  getAge,
+  convertDateString,
+  weightedProduct
 };
