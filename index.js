@@ -325,7 +325,11 @@ client.on("message", async (message) => {
           message.reply(response.messages);
           await client.sendMessage(response.chatId, response.messages);
           if (response.media) {
-            const media = new MessageMedia("application/pdf", response.media);
+            const media = new MessageMedia(
+              "application/pdf",
+              response.media,
+              response.filename
+            );
             await client.sendMessage(response.chatId, media);
           }
         },

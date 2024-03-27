@@ -271,6 +271,7 @@ async function accPeminjaman({ peminjamanId, callback, errorCallback }) {
       chatId: helpers.phoneNumberFormatter(peminjaman.pengguna.phoneNumber),
       messages: `Peminjaman dengan kode: *${peminjaman.id}* berhasil diacc, silahkan ambil kunci di admin`,
       media: pdf,
+      filename: "SIP-" + printdata.fullname,
     });
   } catch (error) {
     console.log(error);
