@@ -5,27 +5,159 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <style>
-    header {
+    * {
+      margin: 0;
+    }
+    main {
+      margin: 2em;
+      display: flex;
+      flex-direction: column;
+    }
+    main > * + * {
+      margin-top: 1rem
+    }
+    .header {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
     }
+    .header > * {
+      text-align: center;
+    }
     .logo {
       width: 40px;
       height: 40px;
     }
+    p.paragraph {
+      text-align: justify;
+      text-indent: 2em;
+    }
+    .signature {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: end;
+    }
+    .sign {
+      height: 5em;
+    }
+    li {
+      text-align: justify;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <!-- <div class="logo"></div> -->
-    <h1>KEMENTERIAN AGAMA REPUBLIK INDONESIA</h1>
-    <h2>DIREKTORAT JENDERAL PENDIDIKAN ISLAM</h2>
-    <p>Jalan Lapangan Banteng Barat No. 3-4 Jakarta Pusat 10710</p>
-    <p>TElepon (021) 3851220 Website: pendis.kemenag.go.id</p>
-  </header>
-  <hr>
-  <p>Ini data dinamis {{dinamis}}</p>
+  <main>
+    <header class="header">
+      <!-- <div class="logo"></div> -->
+      <h1>KEMENTERIAN AGAMA REPUBLIK INDONESIA</h1>
+      <h2>DIREKTORAT JENDERAL PENDIDIKAN ISLAM</h2>
+      <p>Jalan Lapangan Banteng Barat No. 3-4 Jakarta Pusat 10710</p>
+      <p>Telepon (021) 3851220 Website: pendis.kemenag.go.id</p>
+    </header>
+    <hr>
+    <div class="header">
+      <h2><u>SURAT IZIN PENGGUNAAN</u></h2>
+      <p>Nomor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/Set.1.5/KS.01.6/12/2024</p>
+    </div>
+    
+    <p class="paragraph">Berdasarkan Keputusan Menteri Agama Nomor 730 tahun 2020 Tentang Pedoman Pengamanan Barang Milik Negara pada Kementerian Agama, DIrektorat Jenderal Pendidikan Islam dengan ini memberikan izin penggunaan kepada :</p>
+    
+    <div style="margin-left: 2.25em;margin-right: 2.25em;">
+      <table>
+        <tbody>
+          <tr>
+            <td>Nama</td>
+            <td>:</td>
+            <td>{{fullname}}</td>
+          </tr>
+          <tr>
+            <td>NIP</td>
+            <td>:</td>
+            <td>{{nip}}</td>
+          </tr>
+          <tr>
+            <td>Jabatan</td>
+            <td>:</td>
+            <td>{{jabatan}}</td>
+          </tr>
+          <tr>
+            <td>Alamat</td>
+            <td>:</td>
+            <td>{{alamatKantor}}</td>
+          </tr>
+          <tr>
+            <td style="padding-top: 1rem; padding-bottom: 1rem;" colspan="3">Untuk mempergunakan {{jenisbarang}} dengan </td>
+          </tr>
+          <tr>
+            <td>Merk</td>
+            <td>:</td>
+            <td>{{merk}}</td>
+          </tr>
+          <tr>
+            <td>Tipe/Spesifikasi</td>
+            <td>:</td>
+            <td>{{tipe}}</td>
+          </tr>
+          <tr>
+            <td>NUP</td>
+            <td>:</td>
+            <td>{{nup}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div>
+      <!-- Ketentuan -->
+      <ol>
+        <li>{{jenisbarang}} dipergunakan untuk kepentingan dinas;</li>
+        <li>Pengguna {{jenisbarang}} harus merawat dan memelihara sebaik-baiknya untuk menunjang kelancaran tugas;</li>
+        <li>Melaporkan kepada pimpinan, apabila {{jenisbarang}} dimaksud memerlukan perbaikan;</li>
+        <li>{{jenisbarang}} tidak dapat/tidak boleh dipinjamkan kepada pihak lain kecuali untuk kepentingan dinas;</li>
+        <li>Pengguna sanggup menyimpan, menjaga, merawat baik pada jam kerja/diluar jam kerja dan bertanggung jawab apabila terjadi kehilangan dan tuntutan ganti rugi (TGR) sesuai ketentuan yang berlaku;</li>
+        <li>Surat izin penggunaan ini sewaktu-waktu dapat ditarik kembali menurut kepentingan dinas dan berlaku terhadap yang bersangkutan selama menjabat;</li>
+        <li>Dalam setiap mutasi, rotasi atau pensiun pemegang {{jensibarang}} wajib mengembalikan kepada pimpinan;</li>
+        <li>Surat izin pemakaian {{jenisbarang}} ini berlaku sejak tanggal ditetapkan</li>
+      </ol>
+    </div>
+  
+    <p>Demikian, surat izin ini kami buat untuk dilaksanakan sebagaimana mestinya.</p>
+  
+    <div>
+      <table>
+        <tbody>
+          <tr>
+            <td>Ditetapkan di</td>
+            <td>:</td>
+            <td>{{tempat}}</td>
+          </tr>
+          <tr>
+            <td>Pada tanggal</td>
+            <td>:</td>
+            <td>{{tanggal}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  
+    <div class="signature">
+      <div>
+        <p>Mengetahui/Menyetujui</p>
+        <p style="text-indent: -1.75em;">a.n Direktur Jenderal</p>
+        <p>Sekretaris</p>
+        <div class="sign"></div>
+        <p>{{accname}}</p>
+        <p>{{accnip}}</p>
+      </div>
+      <div>
+        <p>Yang menerima,</p>
+        <div class="sign"></div>
+        <p>{{reqname}}</p>
+        <p>{{reqnip}}</p>
+      </div>
+    </div>
+  </main>
 </body>
 </html>

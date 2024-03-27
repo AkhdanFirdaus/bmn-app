@@ -251,7 +251,23 @@ async function createPDF() {
   );
 
   const template = handlebars.compile(content);
-  const html = template({ dinamis: "Test dari backend" });
+  const html = template({
+    fullname: "Sample Nama",
+    nip: "-",
+    jabatan:
+      "PPNPN pada Bagian Umum dan BMN Sekretariat Direktorat Jenderal Pendidikan Islam",
+    alamatKantor: "alamat kantor",
+    merk: "ASUS",
+    tipe: "ASUS ROG Strix Scar",
+    nup: "924",
+    jenisbarang: "Laptop",
+    tempat: "Jakarta",
+    tanggal: "22 Desember 2022",
+    accname: "Nama Approval",
+    accnip: "198237123124",
+    reqname: "Nama yang Mengajukan",
+    reqnip: "12312313212",
+  });
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
   await page.setContent(html, {
