@@ -242,9 +242,12 @@ async function accPeminjaman({ peminjamanId, callback, errorCallback }) {
       },
     });
 
+    const pdf = await helpers.createPDF();
+
     callback({
       chatId: helpers.phoneNumberFormatter(peminjaman.pengguna.phoneNumber),
       messages: `Peminjaman dengan kode: *${peminjaman.id}* berhasil diacc, silahkan ambil kunci di admin`,
+      media: pdf,
     });
   } catch (error) {
     console.log(error);

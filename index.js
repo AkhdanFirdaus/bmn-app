@@ -1,28 +1,28 @@
-require('dotenv').config();
+require("dotenv").config();
 
 const BASE_URL = process.env.BASE_URL;
 
-const path = require('path');
-const routes = require('./src/routes');
+const path = require("path");
+const routes = require("./src/routes");
 
-const express = require('express');
+const express = require("express");
 const app = express();
-const http = require('http');
+const http = require("http");
 const server = http.createServer(app);
-const { Server } = require('socket.io');
-const cors = require('cors');
-const qrcode = require('qrcode');
-const { Client, LocalAuth } = require('whatsapp-web.js');
-const db = require('./src/db');
-const helpers = require('./src/helpers');
-const commandsController = require('./src/commands');
-const commandsFrontendController = require('./src/commands-frontend');
+const { Server } = require("socket.io");
+const cors = require("cors");
+const qrcode = require("qrcode");
+const { Client, LocalAuth, MessageMedia } = require("whatsapp-web.js");
+const db = require("./src/db");
+const helpers = require("./src/helpers");
+const commandsController = require("./src/commands");
+const commandsFrontendController = require("./src/commands-frontend");
 
 const options = {
   cors: {
-    origin: '*',
-    method: ['GET', 'POST'],
-  }
+    origin: "*",
+    method: ["GET", "POST"],
+  },
 };
 
 const io = new Server(server, options);
@@ -31,54 +31,54 @@ const client = new Client({
   authStrategy: new LocalAuth(),
 });
 
-client.on('ready', () => {
-  console.log('Chatbot: is ready');
+client.on("ready", () => {
+  console.log("Chatbot: is ready");
 });
 
 client.initialize();
 
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use("/public", express.static(path.join(__dirname, "public")));
 app.use(cors(options));
-app.use(express.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use('/', routes);
+app.use("/", routes);
 
-io.on('connection', (socket) => {
+io.on("connection", (socket) => {
   console.log(`Socket: a user (${socket.id}) Connected`);
 
-  socket.on('is_authenticated', async () => {
+  socket.on("is_authenticated", async () => {
     try {
-      console.log('ada permintaan untuk cek autentikasi');
+      console.log("ada permintaan untuk cek autentikasi");
       await client.getContacts();
-      socket.emit('message', `user (${socket.id}) Connected`);
+      socket.emit("message", `user (${socket.id}) Connected`);
     } catch (error) {
-      socket.emit('message', 'Whatsapp Loading');
+      socket.emit("message", "Whatsapp Loading");
     }
   });
-  
-  socket.on('disconnect', () => {
+
+  socket.on("disconnect", () => {
     console.log(`Socket: user (${socket.id}) Disconnected`);
   });
 
-  socket.on('get_kendaraan', async () => {
-    socket.emit('message', 'Mengambil data kendaraan...');
+  socket.on("get_kendaraan", async () => {
+    socket.emit("message", "Mengambil data kendaraan...");
     const kendaraan = await db.kendaraan.findMany();
-    socket.emit('data', kendaraan);
+    socket.emit("data", kendaraan);
   });
 
-  socket.on('get_jumlah_data', async () => {
-    socket.emit('message', 'Mengambil jumlah data kendaraan...');
+  socket.on("get_jumlah_data", async () => {
+    socket.emit("message", "Mengambil jumlah data kendaraan...");
     await commandsFrontendController.getJumlahData({
       callback: (jumlahData) => {
-        socket.emit('data', jumlahData);
-        socket.emit('message', 'Berhasil mengambil jumlah data kendaraan');
-      }
+        socket.emit("data", jumlahData);
+        socket.emit("message", "Berhasil mengambil jumlah data kendaraan");
+      },
     });
   });
 
-  socket.on('get_kendaraan_detail', async (data) => {
+  socket.on("get_kendaraan_detail", async (data) => {
     try {
-      socket.emit('message', 'Mengambil data kendaraan');
+      socket.emit("message", "Mengambil data kendaraan");
       const kendaraan = await db.kendaraan.findFirstOrThrow({
         where: {
           id: parseInt(data),
@@ -90,8 +90,8 @@ io.on('connection', (socket) => {
               createdAt: true,
               pelapor: {
                 select: {
-                  nama: true
-                }
+                  nama: true,
+                },
               },
               outputKlasifikasi: {
                 select: {
@@ -99,11 +99,11 @@ io.on('connection', (socket) => {
                     select: {
                       label: true,
                       bobot: true,
-                    }
-                  }
+                    },
+                  },
                 },
-              }
-            }
+              },
+            },
           },
           riwayatPenggunaan: {
             select: {
@@ -116,143 +116,142 @@ io.on('connection', (socket) => {
               keterangan: true,
               mulai: true,
               selesai: true,
-            }
+            },
           },
-        }
+        },
       });
       console.log(kendaraan);
-      socket.emit('data', kendaraan);
+      socket.emit("data", kendaraan);
     } catch (error) {
-      socket.emit('message', 'terjadi kesalahan');
-      socket.emit('data', error);
+      socket.emit("message", "terjadi kesalahan");
+      socket.emit("data", error);
     }
   });
 
-  socket.on('get_laporan_summary', async () => {
-    socket.emit('message', 'Mengambil data laporan...');
+  socket.on("get_laporan_summary", async () => {
+    socket.emit("message", "Mengambil data laporan...");
     await commandsFrontendController.getLaporanSummary({
       callback: (data) => {
-        socket.emit('data', data);
-        socket.emit('message', 'Berhasil mengambil data laporan');
-      }
+        socket.emit("data", data);
+        socket.emit("message", "Berhasil mengambil data laporan");
+      },
     });
   });
 
-  socket.on('success_pinjam', async (data) => {
-    socket.emit('message', 'Mengirim data peminjaman...');
+  socket.on("success_pinjam", async (data) => {
+    socket.emit("message", "Mengirim data peminjaman...");
     await commandsController.successPinjam({
       peminjamanId: data,
       callback: (response) => {
         client.sendMessage(response.chatId, response.messages);
-      }
+      },
     });
   });
 
-  client.on('qr', (qr) => {
+  client.on("qr", (qr) => {
     console.log(qr);
     qrcode.toDataURL(qr, (err, url) => {
-      socket.emit('qr', url);
+      socket.emit("qr", url);
     });
   });
 
-  client.on('authenticated', (data) => {
-    console.log('Chatbot: authenticated');
-    console.log('Authenticated ', data);
-    socket.emit('message', `Chatbot (${socket.id}) Authenticated`);
+  client.on("authenticated", (data) => {
+    console.log("Chatbot: authenticated");
+    console.log("Authenticated ", data);
+    socket.emit("message", `Chatbot (${socket.id}) Authenticated`);
   });
 
-  client.on('disconnected', () => {
-    socket.emit('message', `You're (${socket.id}) Disconnected`);
+  client.on("disconnected", () => {
+    socket.emit("message", `You're (${socket.id}) Disconnected`);
     client.destroy();
     client.initialize();
   });
 });
 
-client.on('message', async (message) => {
+client.on("message", async (message) => {
   const command = message.body;
   const contact = await message.getContact();
   const number = contact.id.user;
-  
-  if (command.startsWith('!help')) {
+
+  if (command.startsWith("!help")) {
     let response;
 
     const checkIfAdmin = await helpers.checkAuthenticationAdmin(number);
-  
+
     const defaultcommands = [
-      'Halo! ada yang bisa saya bantu?\n',
-      'Berikut adalah perintah yang bisa kamu gunakan:',
-      '*!help* - menampilkan pesan bantuan',
-      '*!kendaraan* - menampilkan pesan kendaraan',
-      '*!kendaraan <id>* - menampilkan detail kendaraan',
+      "Halo! ada yang bisa saya bantu?\n",
+      "Berikut adalah perintah yang bisa kamu gunakan:",
+      "*!help* - menampilkan pesan bantuan",
+      "*!kendaraan* - menampilkan pesan kendaraan",
+      "*!kendaraan <id>* - menampilkan detail kendaraan",
     ];
-    
+
     if (checkIfAdmin instanceof Error) {
       response = [
         ...defaultcommands,
-        '*!pinjam <id>* - mengajukan peminjaman kendaraan',
-        '*!daftar* - menampilkan pesan daftar',
-        '*!lapor <isi laporan>* - melaporkan kondisi kendaraan',
-        '*!status* - melihat status peminjaman kendaraan',
+        "*!pinjam <id>* - mengajukan peminjaman kendaraan",
+        "*!daftar* - menampilkan pesan daftar",
+        "*!lapor <isi laporan>* - melaporkan kondisi kendaraan",
+        "*!status* - melihat status peminjaman kendaraan",
       ];
     } else {
       response = [
         ...defaultcommands,
-        '*!acc list* - melihat semua permohonan peminjaman',
-        '*!acc <id>* - melakukan persetujuan peminjaman',
+        "*!acc list* - melihat semua permohonan peminjaman",
+        "*!acc <id>* - melakukan persetujuan peminjaman",
       ];
     }
-    message.reply(response.join('\n'));
+    message.reply(response.join("\n"));
   }
 
-  if (command.startsWith('!daftar')) {
+  if (command.startsWith("!daftar")) {
     const contact = await message.getContact();
     const response = [
-      'Silahkan isi form pendaftaran berikut:',
+      "Silahkan isi form pendaftaran berikut:",
       `${BASE_URL}/daftar?phone=${contact.id.user}`,
     ];
-    message.reply(response.join('\n'));
+    message.reply(response.join("\n"));
   }
 
-  if (command.startsWith('!kendaraan')) {
-    const params = command.split(' ');
+  if (command.startsWith("!kendaraan")) {
+    const params = command.split(" ");
     const contact = await message.getContact();
     const number = contact.id.user;
 
     console.log(contact);
-    
+
     const checkIfAuth = await helpers.checkAuthentication(number);
 
     if (checkIfAuth instanceof Error) {
-      message.reply('Anda tidak terdaftar sebagai pengguna');
+      message.reply("Anda tidak terdaftar sebagai pengguna");
       return;
     }
 
     if (params[1]) {
-      await commandsController.getDetailKendaraan({ 
+      await commandsController.getDetailKendaraan({
         id: params[1],
         callback: (response) => {
           message.reply(response);
-        }
+        },
       });
     } else {
       await commandsController.getKendaraan({
         callback: (response) => {
           message.reply(response);
-        }
+        },
       });
     }
-    
   }
 
-  if (command.startsWith('!pinjam')) {
-    const params = command.split(' ');
+  if (command.startsWith("!pinjam")) {
+    const params = command.split(" ");
     const contact = await message.getContact();
     const number = contact.id.user;
-    
+
     const checkIfAuth = await helpers.checkAuthentication(number, true);
 
     if (checkIfAuth instanceof Error) {
-      message.reply('Anda tidak terdaftar sebagai pengguna');
+      message.reply("Anda tidak terdaftar sebagai pengguna");
       return;
     }
 
@@ -260,29 +259,29 @@ client.on('message', async (message) => {
       const checkKendaraan = await helpers.checkKendaraan(params[1]);
 
       if (checkKendaraan instanceof Error) {
-        message.reply('Kendaraan tidak ditemukan');
+        message.reply("Kendaraan tidak ditemukan");
         return;
       }
 
       const response = [
-        'Silahkan isi form peminjaman berikut:',
+        "Silahkan isi form peminjaman berikut:",
         `${BASE_URL}/pinjam?phone=${number}&kendaraan=${checkKendaraan}`,
       ];
-      message.reply(response.join('\n'));
+      message.reply(response.join("\n"));
     } else {
-      message.reply('Silahkan ketik *!pinjam <id kendaraan>*');
+      message.reply("Silahkan ketik *!pinjam <id kendaraan>*");
     }
   }
 
-  if (command.startsWith('!lapor')) {
-    const body = command.replace('!lapor ', '');
+  if (command.startsWith("!lapor")) {
+    const body = command.replace("!lapor ", "");
     const contact = await message.getContact();
     const number = contact.id.user;
-    
+
     const checkIfAuth = await helpers.checkAuthentication(number, true);
 
     if (checkIfAuth instanceof Error) {
-      message.reply('Anda tidak terdaftar sebagai pengguna');
+      message.reply("Anda tidak terdaftar sebagai pengguna");
       return;
     }
 
@@ -297,27 +296,27 @@ client.on('message', async (message) => {
       },
       errorCallback: (messages) => {
         message.reply(messages);
-      }
+      },
     });
   }
 
-  if (command.startsWith('!acc')) {
-    const params = command.split(' ');
+  if (command.startsWith("!acc")) {
+    const params = command.split(" ");
     const contact = await message.getContact();
     const number = contact.id.user;
-    
+
     const checkIfAdmin = await helpers.checkAuthenticationAdmin(number);
 
     if (checkIfAdmin instanceof Error) {
-      message.reply('Anda bukan admin');
+      message.reply("Anda bukan admin");
       return;
     }
 
-    if (params[1] === 'list') {
+    if (params[1] === "list") {
       await commandsController.listPeminjaman({
         callback: async (response) => {
           message.reply(response);
-        }
+        },
       });
     } else if (!isNaN(parseInt(params[1]))) {
       await commandsController.accPeminjaman({
@@ -325,24 +324,28 @@ client.on('message', async (message) => {
         callback: async (response) => {
           message.reply(response.messages);
           await client.sendMessage(response.chatId, response.messages);
+          if (response.media) {
+            const media = new MessageMedia("application/pdf", response.media);
+            await message.sendMessage(response.chatId, media);
+          }
         },
         errorCallback: (messages) => {
           message.reply(messages);
-        }
+        },
       });
     } else {
-      message.reply('Silahkan ketik *!acc <id peminjaman>*');
+      message.reply("Silahkan ketik *!acc <id peminjaman>*");
     }
   }
 
-  if (command.startsWith('!status')) {
+  if (command.startsWith("!status")) {
     const contact = await message.getContact();
     const number = contact.id.user;
-    
+
     const checkIfAuth = await helpers.checkAuthentication(number, true);
 
     if (checkIfAuth instanceof Error) {
-      message.reply('Anda tidak terdaftar sebagai pengguna');
+      message.reply("Anda tidak terdaftar sebagai pengguna");
       return;
     }
 
@@ -355,21 +358,21 @@ client.on('message', async (message) => {
       },
       errorCallback: (messages) => {
         message.reply(messages);
-      }
+      },
     });
   }
 
-  if (!command.startsWith('!')) {
+  if (!command.startsWith("!")) {
     const response = [
-      'Maaf, saya tidak mengerti apa yang anda maksud.',
-      'Silahkan ketik *!help* untuk melihat daftar perintah'
+      "Maaf, saya tidak mengerti apa yang anda maksud.",
+      "Silahkan ketik *!help* untuk melihat daftar perintah",
     ];
-    message.reply(response.join('\n'));
+    message.reply(response.join("\n"));
   }
 });
 
 const port = process.env.PORT || 3003;
-server.listen(port, () => {
+server.listen(port, "0.0.0.0", () => {
   console.log(`APP running on *:${port}`);
-  io.emit('message', 'Chatbot connecting');
+  io.emit("message", "Chatbot connecting");
 });
