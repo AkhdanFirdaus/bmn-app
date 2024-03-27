@@ -1,16 +1,20 @@
 // const { default: axios } = require('axios');
-const db = require('./db');
+const db = require("./db");
+const fs = require("fs");
+const path = require("path");
+const puppeteer = require("puppeteer");
+const handlebars = require("handlebars");
 
 /* eslint-disable indent */
 function getStatusPenggunaan(status) {
   // 0 digunakan dinas operasional, 1 digunakan dinas jabatan
   switch (status) {
     case 0:
-      return 'Dinas Operasional';
+      return "Dinas Operasional";
     case 1:
-      return 'Dinas Jabatan';
+      return "Dinas Jabatan";
     default:
-      return 'Tidak diketahui';
+      return "Tidak diketahui";
   }
 }
 
@@ -18,21 +22,21 @@ function phoneNumberFormatter(number) {
   let str = String(number);
 
   // 1. Menghilangkan karakter selain angka
-  let formatted = str.replace(/\D/g, '');
+  let formatted = str.replace(/\D/g, "");
 
   // 2. Menghilangkan prefix 0 di depan -> di ganti dengan 62
-  if (formatted.startsWith('0')) {
-    formatted = '62' + formatted.substring(1);
+  if (formatted.startsWith("0")) {
+    formatted = "62" + formatted.substring(1);
   }
 
-  if (!formatted.endsWith('@c.us')) {
-    formatted += '@c.us';
+  if (!formatted.endsWith("@c.us")) {
+    formatted += "@c.us";
   }
 
   return formatted;
 }
 
-async function checkAuthentication(phoneNumber, getKendaraan=false) {
+async function checkAuthentication(phoneNumber, getKendaraan = false) {
   try {
     let customQuery = {};
     if (getKendaraan) {
@@ -43,27 +47,24 @@ async function checkAuthentication(phoneNumber, getKendaraan=false) {
               kendaraan_id: true,
             },
             where: {
-              AND: [
-                {isApproved: true},
-                {selesai: null},
-              ]
+              AND: [{ isApproved: true }, { selesai: null }],
             },
             orderBy: {
-              id: 'desc',
+              id: "desc",
             },
             take: 1,
           },
-        }
+        },
       };
     }
     const user = await db.user.findFirstOrThrow({
-      where: {phoneNumber},
-      ...customQuery
+      where: { phoneNumber },
+      ...customQuery,
     });
     return user;
   } catch (error) {
-    console.log('Check authentication error: ', error);
-    return Error('User not found');
+    console.log("Check authentication error: ", error);
+    return Error("User not found");
   }
 }
 
@@ -71,26 +72,23 @@ async function checkAuthenticationAdmin(phoneNumber) {
   try {
     const user = await db.user.findFirstOrThrow({
       where: {
-        AND: [
-          {phoneNumber},
-          {role: 'admin'},
-        ]
+        AND: [{ phoneNumber }, { role: "admin" }],
       },
     });
     return user;
   } catch (error) {
-    return Error('User not found');
+    return Error("User not found");
   }
 }
 
 async function checkKendaraan(kendaraanId) {
   try {
     const kendaraan = await db.kendaraan.findFirstOrThrow({
-      where: {id: parseInt(kendaraanId), isDeleted: false},
+      where: { id: parseInt(kendaraanId), isDeleted: false },
     });
     return kendaraan.id;
   } catch (error) {
-    return Error('Kendaraan not found');
+    return Error("Kendaraan not found");
   }
 }
 
@@ -102,7 +100,7 @@ async function getLabels(indexes = []) {
         indeks: {
           in: indexes,
         },
-      }
+      },
     };
   }
   const labels = await db.label.findMany({
@@ -113,7 +111,7 @@ async function getLabels(indexes = []) {
 
 async function getAdmin() {
   const admin = await db.user.findFirst({
-    where: {role: 'admin'},
+    where: { role: "admin" },
   });
   return {
     chatId: phoneNumberFormatter(admin.phoneNumber),
@@ -125,13 +123,15 @@ function getKondisi(hasilLaporan) {
   const detected_labels = [];
   const detected_problems = [];
   const kondisiLabels = hasilLaporan.reduce((acc, curr) => {
-    acc.push(...curr.outputKlasifikasi.map((item) => {
-      if (!detected_labels.includes(item.label.id)) {
-        detected_labels.push(item.label.id);
-        detected_problems.push(item.label.label);
-      }
-      return item.label;
-    }));
+    acc.push(
+      ...curr.outputKlasifikasi.map((item) => {
+        if (!detected_labels.includes(item.label.id)) {
+          detected_labels.push(item.label.id);
+          detected_problems.push(item.label.label);
+        }
+        return item.label;
+      })
+    );
     return acc;
   }, []);
 
@@ -148,7 +148,7 @@ function getKondisi(hasilLaporan) {
     masalah: detected_problems,
     indeks: indeks ?? 0,
     label: labelKerusakan(indeks),
-    persentase: getPecentage(indeks)
+    persentase: getPecentage(indeks),
   };
 }
 
@@ -156,7 +156,7 @@ function getKondisiLaporan(outputKlasifikasi) {
   const detected_labels = [];
   const detected_problems = [];
   const detected_bobot = [];
-  
+
   outputKlasifikasi.forEach((item) => {
     if (!detected_labels.includes(item.label.id)) {
       detected_labels.push(item.label.id);
@@ -175,7 +175,7 @@ function getKondisiLaporan(outputKlasifikasi) {
     masalah: detected_problems,
     indeks: indeks ?? 0,
     label: labelKerusakan(indeks),
-    persentase: getPecentage(indeks)
+    persentase: getPecentage(indeks),
   };
 }
 
@@ -183,13 +183,13 @@ function labelKerusakan(value) {
   let nilai = Math.floor(value);
   let label;
   if (nilai >= 1 && nilai <= 3) {
-      label = 'Rusak Ringan';
+    label = "Rusak Ringan";
   } else if (nilai >= 4 && nilai <= 6) {
-      label = 'Rusak';
+    label = "Rusak";
   } else if (nilai >= 7 && nilai <= 10) {
-      label = 'Sangat Rusak';
+    label = "Sangat Rusak";
   } else {
-      label = 'Nilai tidak valid';
+    label = "Nilai tidak valid";
   }
   return label;
 }
@@ -198,7 +198,7 @@ function getPecentage(value) {
   if (value) {
     return `${Math.round(value * 10)}%`;
   } else {
-    return '0%';
+    return "0%";
   }
 }
 
@@ -208,7 +208,7 @@ function getAge(dateString) {
   var age = today.getFullYear() - birthDate.getFullYear();
   var m = today.getMonth() - birthDate.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+    age--;
   }
   return age ?? 0;
 }
@@ -216,7 +216,7 @@ function getAge(dateString) {
 function convertDateString(dateString) {
   const date = new Date(dateString);
   const day = date.getDate();
-  const month = date.toLocaleString('default', { month: 'long' });
+  const month = date.toLocaleString("default", { month: "long" });
   const year = date.getFullYear();
   return `${day} ${month} ${year}`;
 }
@@ -224,24 +224,50 @@ function convertDateString(dateString) {
 function weightedProduct(bobot, skalaKepentingan, skalaKerusakan) {
   // Langkah 2: Normalisasi Bobot
   const totalBobot = bobot.reduce((sum, w) => sum + w, 0);
-  const bobotTernormalisasi = bobot.map(w => w / totalBobot);
-  
+  const bobotTernormalisasi = bobot.map((w) => w / totalBobot);
+
   // Langkah 3: Hitung Produk Bobot dan Skala Kepentingan
-  const produkBobotSkala = bobotTernormalisasi.map(w =>
-      skalaKepentingan.map(sk => w * sk)
+  const produkBobotSkala = bobotTernormalisasi.map((w) =>
+    skalaKepentingan.map((sk) => w * sk)
   );
-  
+
   // Langkah 4: Jumlahkan Hasil Produk
-  const totalProduk = produkBobotSkala.map(produk =>
-      produk.reduce((sum, value) => sum + value, 0)
+  const totalProduk = produkBobotSkala.map((produk) =>
+    produk.reduce((sum, value) => sum + value, 0)
   );
-  
+
   // Langkah 5: Tentukan Skala Kerusakan
-  const hasilSkalaKerusakan = totalProduk.map(produk =>
-      skalaKerusakan[produk - 1]
+  const hasilSkalaKerusakan = totalProduk.map(
+    (produk) => skalaKerusakan[produk - 1]
   );
-  
+
   return hasilSkalaKerusakan;
+}
+
+async function createPDF() {
+  const content = fs.readFileSync(
+    path.join(__dirname, "..", "public", "sip_template.html"),
+    "utf-8"
+  );
+
+  const template = handlebars.compile(content);
+  const html = template({ dinamis: "Test dari backend" });
+  const browser = await puppeteer.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.setContent(html, {
+    waitUntil: ["domcontentloaded", "load", "networkidle0"],
+  });
+  const buffer = await page.pdf({
+    format: "A4",
+    margin: {
+      bottom: "0px",
+      top: "0px",
+      right: "0px",
+      left: "0px",
+    },
+  });
+  await browser.close();
+  return buffer;
 }
 
 module.exports = {
@@ -258,5 +284,6 @@ module.exports = {
   getKondisiLaporan,
   getAge,
   convertDateString,
-  weightedProduct
+  weightedProduct,
+  createPDF,
 };

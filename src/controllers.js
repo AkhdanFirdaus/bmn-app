@@ -1,14 +1,14 @@
-const db = require('./db');
-const helpers = require('./helpers');
+const db = require("./db");
+const helpers = require("./helpers");
 
 async function getKendaraan(req, res) {
   try {
     // get type from query params
-    const {type} = req.query;
+    const { type } = req.query;
 
     let query = {};
 
-    if (type === 'dengan-kondisi') {
+    if (type === "dengan-kondisi") {
       query = {
         include: {
           laporan: {
@@ -22,28 +22,28 @@ async function getKendaraan(req, res) {
                     select: {
                       id: true,
                       label: true,
-                      bobot: true
-                    }
-                  }
+                      bobot: true,
+                    },
+                  },
                 },
                 where: {
                   isDeleted: false,
-                }
-              }
-            }
-          }
-        }
+                },
+              },
+            },
+          },
+        },
       };
     }
-    const kendaraan = await db.kendaraan.findMany({...query});
+    const kendaraan = await db.kendaraan.findMany({ ...query });
 
     const data = kendaraan.map((item) => {
-      if (type === 'dengan-kondisi') {
+      if (type === "dengan-kondisi") {
         const kondisi = helpers.getKondisi(item.laporan);
         delete item.laporan;
         return {
           ...item,
-          kondisi
+          kondisi,
         };
       } else {
         delete item.laporan;
@@ -51,12 +51,12 @@ async function getKendaraan(req, res) {
       }
     });
     res.json({
-      message: 'Success get kendaraan',
+      message: "Success get kendaraan",
       data,
     });
   } catch (error) {
     res.status(400).json({
-      message: 'Failed get kendaraan',
+      message: "Failed get kendaraan",
       data: error,
     });
   }
@@ -64,12 +64,12 @@ async function getKendaraan(req, res) {
 
 async function getKendaraanDetail(req, res) {
   try {
-    const {id} = req.params;
-    const {type} = req.query;
+    const { id } = req.params;
+    const { type } = req.query;
 
     let query = {};
 
-    if (type === 'dengan-kondisi') {
+    if (type === "dengan-kondisi") {
       query = {
         include: {
           laporan: {
@@ -83,44 +83,44 @@ async function getKendaraanDetail(req, res) {
                     select: {
                       id: true,
                       label: true,
-                      bobot: true
-                    }
-                  }
+                      bobot: true,
+                    },
+                  },
                 },
                 where: {
                   isDeleted: false,
-                }
-              }
-            }
-          }
-        }
+                },
+              },
+            },
+          },
+        },
       };
     }
 
     const kendaraan = await db.kendaraan.findFirst({
-      where: {id: parseInt(id)},
+      where: { id: parseInt(id) },
       ...query,
     });
 
-    if (type === 'dengan-kondisi') {
+    if (type === "dengan-kondisi") {
       const kondisi = helpers.getKondisi(kendaraan.laporan);
       delete kendaraan.laporan;
       res.json({
-        message: 'Kondisi Kendaraan',
+        message: "Kondisi Kendaraan",
         data: {
           ...kendaraan,
-          kondisi
-        }
+          kondisi,
+        },
       });
     } else {
       res.json({
-        message: 'Success get kendaraan detail',
+        message: "Success get kendaraan detail",
         data: kendaraan,
       });
     }
   } catch (error) {
     res.status(400).json({
-      message: 'Failed get kendaraan detail',
+      message: "Failed get kendaraan detail",
       data: error,
     });
   }
@@ -128,17 +128,17 @@ async function getKendaraanDetail(req, res) {
 
 async function getUserDetail(req, res) {
   try {
-    const {phoneNumber} = req.params;
+    const { phoneNumber } = req.params;
     const user = await db.user.findFirstOrThrow({
-      where: {phoneNumber},
+      where: { phoneNumber },
     });
     res.json({
-      message: 'Success get user',
+      message: "Success get user",
       data: user,
     });
   } catch (error) {
     res.status(400).json({
-      message: 'Failed get user',
+      message: "Failed get user",
       data: error,
     });
   }
@@ -146,7 +146,7 @@ async function getUserDetail(req, res) {
 
 async function postDaftar(req, res) {
   try {
-    const {nama, phoneNumber, pin} = req.body;
+    const { nama, phoneNumber, pin } = req.body;
     const user = await db.user.create({
       data: {
         nama,
@@ -155,12 +155,12 @@ async function postDaftar(req, res) {
       },
     });
     res.json({
-      message: 'Berhasil daftar',
+      message: "Berhasil daftar",
       data: user,
     });
   } catch (error) {
     res.status(400).json({
-      message: 'Gagal daftar',
+      message: "Gagal daftar",
       data: error,
     });
   }
@@ -168,21 +168,22 @@ async function postDaftar(req, res) {
 
 async function postPinjam(req, res) {
   try {
-    const {phoneNumber, tanggalPinjam, kendaraanId, keterangan, pin} = req.body;
+    const { phoneNumber, tanggalPinjam, kendaraanId, keterangan, pin } =
+      req.body;
 
     console.log(req.body);
 
     const user = await helpers.checkAuthentication(phoneNumber);
-    
+
     if (!user) {
       return res.status(401).json({
-        message: 'User tidak ditemukan',
+        message: "User tidak ditemukan",
       });
     }
 
     if (user.pin !== pin) {
       return res.status(401).json({
-        message: 'Pin salah',
+        message: "Pin salah",
       });
     }
 
@@ -219,7 +220,7 @@ async function postPinjam(req, res) {
   } catch (error) {
     console.log(error);
     res.status(500).json({
-      message: 'Terjadi kesalahan',
+      message: "Terjadi kesalahan",
       error,
     });
   }
