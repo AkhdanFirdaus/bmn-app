@@ -244,30 +244,32 @@ function weightedProduct(bobot, skalaKepentingan, skalaKerusakan) {
   return hasilSkalaKerusakan;
 }
 
-async function createPDF() {
+const dummy = {
+  fullname: "Sample Nama",
+  nip: "-",
+  jabatan:
+    "PPNPN pada Bagian Umum dan BMN Sekretariat Direktorat Jenderal Pendidikan Islam",
+  alamatKantor: "alamat kantor",
+  merk: "ASUS",
+  tipe: "ASUS ROG Strix Scar",
+  nup: "924",
+  jenisbarang: "Laptop",
+  tempat: "Jakarta",
+  tanggal: "22 Desember 2022",
+  accname: "Nama Approval",
+  accnip: "198237123124",
+  reqname: "Nama yang Mengajukan",
+  reqnip: "12312313212",
+};
+
+async function createPDF({ data = dummy }) {
   const content = fs.readFileSync(
     path.join(__dirname, "..", "public", "sip_template.html"),
     "utf-8"
   );
 
   const template = handlebars.compile(content);
-  const html = template({
-    fullname: "Sample Nama",
-    nip: "-",
-    jabatan:
-      "PPNPN pada Bagian Umum dan BMN Sekretariat Direktorat Jenderal Pendidikan Islam",
-    alamatKantor: "alamat kantor",
-    merk: "ASUS",
-    tipe: "ASUS ROG Strix Scar",
-    nup: "924",
-    jenisbarang: "Laptop",
-    tempat: "Jakarta",
-    tanggal: "22 Desember 2022",
-    accname: "Nama Approval",
-    accnip: "198237123124",
-    reqname: "Nama yang Mengajukan",
-    reqnip: "12312313212",
-  });
+  const html = template(data);
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
   await page.setContent(html, {

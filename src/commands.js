@@ -239,10 +239,32 @@ async function accPeminjaman({ peminjamanId, callback, errorCallback }) {
       },
       include: {
         pengguna: true,
+        kendaraan: true,
       },
     });
 
-    const pdfBuffer = await helpers.createPDF();
+    const printdata = {
+      keterangan: peminjaman.keterangan,
+      mulai: peminjaman.mulai,
+      fullname: peminjaman.pengguna.nama,
+      phoneNumber: peminjaman.pengguna.phoneNumber,
+      nip: "-",
+      jabatan:
+        "PPNPN pada Bagian Umum dan BMN Sekretariat Direktorat Jenderal Pendidikan Islam",
+      alamatKantor: "alamat kantor",
+      merk: peminjaman.kendaraan.merk,
+      tipe: peminjaman.kendaraan.namaBarang,
+      nup: peminjaman.kendaraan.nup,
+      jenisbarang: "",
+      tempat: "Jakarta",
+      tanggal: "22 Desember 2022",
+      accname: "Nama Approval",
+      accnip: "198237123124",
+      reqname: "Nama yang Mengajukan",
+      reqnip: "12312313212",
+    };
+
+    const pdfBuffer = await helpers.createPDF({ data: printdata });
     const pdf = Buffer.from(pdfBuffer).toString("base64");
 
     callback({
