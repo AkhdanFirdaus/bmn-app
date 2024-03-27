@@ -242,7 +242,8 @@ async function accPeminjaman({ peminjamanId, callback, errorCallback }) {
       },
     });
 
-    const pdf = await helpers.createPDF();
+    const pdfBuffer = await helpers.createPDF();
+    const pdf = Buffer.from(pdfBuffer).toString("base64");
 
     callback({
       chatId: helpers.phoneNumberFormatter(peminjaman.pengguna.phoneNumber),
